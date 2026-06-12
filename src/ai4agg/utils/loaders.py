@@ -17,14 +17,21 @@ def make_whole_peptide_set(data_path: Path, **kwargs) -> pd.DataFrame: # noqa
 
     whole_peptide_indices = list()
     aggregation = list()
+    first_diff_clean = list()
     for serial in data["serial"].unique():
         subset = data[data["serial"] == serial]
         whole_peptide_indices.append(subset.iloc[-1].name)
         aggregation.append(subset['aggregation'].sum() >= 1)
+        if "first_diff_clean" in subset:
+            first_diff_clean.append(subset["first_diff_clean"].min())
 
     whole_peptide_set = data.loc[whole_peptide_indices]
     whole_peptide_set['aggregation'] = aggregation
-    whole_peptide_set = whole_peptide_set[["peptide", "serial", "aggregation"]]
+    columns = ["peptide", "serial", "aggregation"]
+    if first_diff_clean:
+        whole_peptide_set["first_diff_clean"] = first_diff_clean
+        columns.append("first_diff_clean")
+    whole_peptide_set = whole_peptide_set[columns]
     whole_peptide_set = whole_peptide_set.drop_duplicates(subset="peptide")
 
     return whole_peptide_set
@@ -53,7 +60,10 @@ def get_aggregation_label_wof(
     if drop:
         subset = subset.iloc[: min(agg_point + end, len(subset))]
 
-    return subset[["peptide", "serial", "aggregation"]]
+    columns = ["peptide", "serial", "aggregation"]
+    if "first_diff_clean" in subset:
+        columns.append("first_diff_clean")
+    return subset[columns]
 
 def make_wof_peptide_set(
     data_path: Path, wof_start: int, wof_end: int, wof_drop: bool = False, **kwargs # noqa

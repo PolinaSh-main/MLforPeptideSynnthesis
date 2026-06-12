@@ -87,7 +87,13 @@ def get_clean_unique_peptides(peptide_df: pd.DataFrame):
 @click.option("--uzh_dataset_path", type=Path, required=True)
 @click.option("--mit_dataset_path", type=Path, required=True)
 @click.option("--save_path", type=Path, required=True)
-def main(uzh_dataset_path: Path, mit_dataset_path: Path, save_path: Path):
+@click.option("--aggregation_threshold", type=float, default=-0.2)
+def main(
+    uzh_dataset_path: Path,
+    mit_dataset_path: Path,
+    save_path: Path,
+    aggregation_threshold: float,
+):
 
     # Process UZH Data
     uzh_data = pd.read_csv(uzh_dataset_path, index_col=0)
@@ -112,7 +118,9 @@ def main(uzh_dataset_path: Path, mit_dataset_path: Path, save_path: Path):
     combined_dataset = get_clean_unique_peptides(combined_dataset)
 
     # Add aggregation
-    combined_dataset['aggregation'] = (combined_dataset['first_diff_clean'] < -0.2)
+    combined_dataset['aggregation'] = (
+        combined_dataset['first_diff_clean'] < aggregation_threshold
+    )
 
     # Save
     combined_dataset = combined_dataset[['serial', 'peptide', 'first_diff_clean', 'aggregation']]

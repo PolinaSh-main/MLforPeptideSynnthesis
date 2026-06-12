@@ -1,5 +1,6 @@
 import random
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -9,7 +10,8 @@ from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 from sklearn.model_selection import KFold, train_test_split
 
-AA_TO_SMILES_PATH = str(files("ai4agg") / "resources/onelet_to_smiles.csv")
+AA_TO_SMILES_PATH = files("ai4agg") / "resources/onelet_to_smiles.csv"
+PROTECTED_AA_TO_SMILES_PATH = files("ai4agg") / "resources/protected_onelet_to_smiles.csv"
 
 
 def seed_everything(seed: int):
@@ -44,11 +46,19 @@ def split_peptide_set(dataset: pd.DataFrame, val: bool = False, cv_split: int = 
 
 class FingerPrintCalculator:
 
-    def __init__(self, n_bits: int) -> None:
+    def __init__(
+        self,
+        n_bits: int,
+        smiles_path: Optional[Union[str, Path]] = None,
+        smiles_column: Optional[str] = None,
+    ) -> None:
 
-        df = pd.read_csv(AA_TO_SMILES_PATH)
+        df = pd.read_csv(smiles_path or AA_TO_SMILES_PATH)
         df = df.replace(np.nan, "", regex=True)
-        df["AASMILES"] = df["left"] + df["sidechain"] + df["right"]
+        if smiles_column is not None:
+            df["AASMILES"] = df[smiles_column]
+        else:
+            df["AASMILES"] = df["left"] + df["sidechain"] + df["right"]
         onelet_smiles_dict = dict(zip(df.abbrev, df.AASMILES))
         
         self.onelet_smiles_dict = onelet_smiles_dict
@@ -68,6 +78,15 @@ class FingerPrintCalculator:
     def morgan_fingerprint(self, amino_acid: str) -> List[float]:
         smile = self.smilifier(amino_acid)
         mol = Chem.MolFromSmiles(smile)
+        if mol is None:
+            raise ValueError(f"Could not build molecule from SMILES {smile!r} for {amino_acid!r}.")
+        fp = self.fingerprint.GetFingerprintAsNumPy(mol)
+        return list(fp)
+
+    def morgan_fingerprint_from_smiles(self, smiles: str) -> List[float]:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            raise ValueError(f"Could not build molecule from SMILES {smiles!r}.")
         fp = self.fingerprint.GetFingerprintAsNumPy(mol)
         return list(fp)
 

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 
-from .utils import FingerPrintCalculator
+from .utils import FingerPrintCalculator, PROTECTED_AA_TO_SMILES_PATH
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -104,10 +104,78 @@ class FingerprintPreprocessor(CorePreprocessor):
         return fingerprint_sequence_np
 
 
+class ProtectedFingerprintPreprocessor(FingerprintPreprocessor):
+
+    def __init__(self, data: pd.DataFrame, padding: bool = True, n_fingerprint_bits: int = 128, random_state: int = 3245, **kwargs): # noqa
+        super().__init__(data, padding, n_fingerprint_bits, random_state)
+        self.fingerprint_calculator = FingerPrintCalculator(
+            n_fingerprint_bits,
+            smiles_path=PROTECTED_AA_TO_SMILES_PATH,
+            smiles_column="smiles",
+        )
+
+    def __call__(self, peptide: str) -> np.ndarray:
+        fingerprint_sequence = list()
+        for aa in peptide:
+            smiles = self.fingerprint_calculator.onelet_smiles_dict[aa]
+            fingerprint_sequence.append(
+                self.fingerprint_calculator.morgan_fingerprint_from_smiles(smiles)
+            )
+
+        if self.padding:
+            n_pad = self.max_sequence_len - len(peptide)
+            pad_vector = np.zeros(n_pad * self.n_fingerprint_bits)
+            fingerprint_sequence.append(pad_vector) # type: ignore
+
+        fingerprint_sequence_np = np.concatenate(fingerprint_sequence, axis=0).flatten()
+        return fingerprint_sequence_np
+
+
+class PositionalFingerprintPreprocessor(FingerprintPreprocessor):
+
+    def __call__(self, peptide: str) -> np.ndarray:
+        fingerprint_sequence = list()
+        peptide_length = len(peptide)
+        for position, aa in enumerate(peptide):
+            weight = (position + 1) / peptide_length
+            fingerprint_aa = np.array(self.fingerprint_calculator.morgan_fingerprint(aa))
+            fingerprint_sequence.append(fingerprint_aa * weight)
+
+        if self.padding:
+            n_pad = self.max_sequence_len - len(peptide)
+            pad_vector = np.zeros(n_pad * self.n_fingerprint_bits)
+            fingerprint_sequence.append(pad_vector) # type: ignore
+
+        fingerprint_sequence_np = np.concatenate(fingerprint_sequence, axis=0).flatten()
+        return fingerprint_sequence_np
+
+
+class WholePeptideFingerprintPreprocessor(CorePreprocessor):
+
+    def __init__(self, data: pd.DataFrame, padding: bool = True, n_fingerprint_bits: int = 128, random_state: int = 3245, **kwargs): # noqa
+        super().__init__(data, False, random_state)
+
+        self.n_fingerprint_bits = n_fingerprint_bits
+        self.fingerprint_calculator = FingerPrintCalculator(n_fingerprint_bits)
+
+    def __call__(self, peptide: str) -> np.ndarray:
+        peptide_smiles = self.fingerprint_calculator.smilifier(peptide)
+        return np.array(
+            self.fingerprint_calculator.morgan_fingerprint_from_smiles(peptide_smiles)
+        )
+
+
 @dataclass
 class OccurencyVectorPreprocessor(CorePreprocessor):
 
-    def __init__(self, data: pd.DataFrame, random_state: int = 3245, normalise: bool = True, **kwargs): # noqa
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        random_state: int = 3245,
+        normalise: bool = True,
+        occurency_vector_normalise: bool | None = None,
+        **kwargs,
+    ): # noqa
         super().__init__(data, False, random_state) # Occurency Vector needs no padding
 
         all_aa = list()
@@ -115,7 +183,7 @@ class OccurencyVectorPreprocessor(CorePreprocessor):
             all_aa.extend(list(peptide))
         self.all_aa = np.unique(all_aa)
 
-        self.normalise = normalise
+        self.normalise = normalise if occurency_vector_normalise is None else occurency_vector_normalise
 
     def __call__(self, peptide: str) -> np.ndarray:
 
