@@ -3,15 +3,13 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-import pkg_resources
+from importlib.resources import files
 import torch
 from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 from sklearn.model_selection import KFold, train_test_split
 
-AA_TO_SMILES_PATH = pkg_resources.resource_filename(
-    "ai4agg", "resources/onelet_to_smiles.csv"
-)
+AA_TO_SMILES_PATH = str(files("ai4agg") / "resources/onelet_to_smiles.csv")
 
 
 def seed_everything(seed: int):
