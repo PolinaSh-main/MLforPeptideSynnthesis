@@ -1,0 +1,98 @@
+======================================================================
+EXPERIMENT LOG
+======================================================================
+
+'Aggregation' means the peptide clumped together during synthesis
+instead of staying dissolved -- something chemists want to predict
+and avoid. This experiment checks how well a model can predict, from
+the peptide and its synthesis conditions, whether aggregation happens.
+
+Data split:              whole_set_shuffled
+  -> Same as 'whole peptide', but the order of amino acids in each peptide was randomly shuffled. This is a sanity check: if the model still performs well on shuffled peptides, it is probably not learning anything meaningful about the real sequence.
+
+Data representation:    protected_whole_peptide_fingerprint
+  -> Like 'whole_peptide_fingerprint', but also includes the protecting groups.
+
+Prediction model:        rff
+  -> Random Forest -- a large committee of decision trees that vote on the answer.
+
+Protecting-group scheme: default_uzh_mit
+
+----------------------------------------------------------------------
+DETAILED RUN LOG
+----------------------------------------------------------------------
+
+01:49:02 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:49:02 INFO [ai4agg.cli.train_sklearn_models] TRAIN SKLEARN MODELS - STARTING
+01:49:02 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:49:02 INFO [ai4agg.cli.train_sklearn_models] Configuration:
+01:49:02 INFO [ai4agg.cli.train_sklearn_models]   Task: classification
+01:49:02 INFO [ai4agg.cli.train_sklearn_models]   Loader: whole_set_shuffled
+01:49:02 INFO [ai4agg.cli.train_sklearn_models]   Preprocessor: protected_whole_peptide_fingerprint
+01:49:02 INFO [ai4agg.cli.train_sklearn_models]   Model: rff
+01:49:02 INFO [ai4agg.cli.train_sklearn_models]   Data path: data\combined_data.csv
+01:49:02 INFO [ai4agg.cli.train_sklearn_models]   Output path: results\experiment_grid\train\whole_set_shuffled__protected_whole_peptide_fingerprint__rff__default_uzh_mit
+01:49:02 INFO [ai4agg.cli.train_sklearn_models]   Seed: 3245
+01:49:02 INFO [ai4agg.cli.train_sklearn_models]   N repeats: 5
+01:49:02 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:49:02 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:49:02 INFO [ai4agg.cli.train_sklearn_models]   loader=whole_set_shuffled, preprocessor=protected_whole_peptide_fingerprint, cv_split=0, seed=0
+01:49:02 INFO [ai4agg.utils.loaders] [make_shuffled_peptide_set] Loading and shuffling with seed=0
+01:49:02 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:49:02 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Processing 351 unique serials
+01:49:02 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Extracted 351 whole peptide indices
+01:49:02 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Before dedup: 351 rows
+01:49:02 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] After dedup: 351 rows
+01:49:02 INFO [ai4agg.utils.loaders] [make_shuffled_peptide_set] Original peptides (first 3):
+['MITSILTFFW', 'SRASDIIRKK', 'KKKKKK']
+01:49:02 INFO [ai4agg.utils.loaders] [make_shuffled_peptide_set] Shuffled peptides (first 3):
+['FIFMWTTLIS', 'KRSAIDSKRI', 'KKKKKK']
+01:49:02 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 351 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:49:02 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'protected_whole_peptide_fingerprint' initialized
+01:49:02 ERROR [ai4agg.cli.run_experiment_grid] [FAIL] whole_set_shuffled__protected_whole_peptide_fingerprint__rff__default_uzh_mit
+Traceback (most recent call last):
+  File "C:\PythonScripts\MLforPeptideSynnthesis\src\ai4agg\cli\run_experiment_grid.py", line 116, in main
+    train_main(args, standalone_mode=False)
+  File "C:\PythonScripts\MLforPeptideSynnthesis\.venv\Lib\site-packages\click\core.py", line 1524, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonScripts\MLforPeptideSynnthesis\.venv\Lib\site-packages\click\core.py", line 1445, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "C:\PythonScripts\MLforPeptideSynnthesis\.venv\Lib\site-packages\click\core.py", line 1308, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonScripts\MLforPeptideSynnthesis\.venv\Lib\site-packages\click\core.py", line 877, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonScripts\MLforPeptideSynnthesis\src\ai4agg\cli\train_sklearn_models.py", line 376, in main
+    dataset_dict = load_data(
+                   ^^^^^^^^^^
+  File "C:\PythonScripts\MLforPeptideSynnthesis\src\ai4agg\cli\train_sklearn_models.py", line 153, in load_data
+    dataset["input"] = dataset["peptide"].map(preprocessor_instance)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonScripts\MLforPeptideSynnthesis\.venv\Lib\site-packages\pandas\core\series.py", line 4719, in map
+    new_values = self._map_values(arg, na_action=na_action)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonScripts\MLforPeptideSynnthesis\.venv\Lib\site-packages\pandas\core\base.py", line 925, in _map_values
+    return algorithms.map_array(arr, mapper, na_action=na_action, convert=convert)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\PythonScripts\MLforPeptideSynnthesis\.venv\Lib\site-packages\pandas\core\algorithms.py", line 1743, in map_array
+    return lib.map_infer(values, mapper, convert=convert)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/lib.pyx", line 2999, in pandas._libs.lib.map_infer
+  File "C:\PythonScripts\MLforPeptideSynnthesis\src\ai4agg\utils\preprocessors.py", line 187, in __call__
+    self.fingerprint_calculator.morgan_fingerprint_from_smiles(peptide_smiles)
+  File "C:\PythonScripts\MLforPeptideSynnthesis\src\ai4agg\utils\utils.py", line 105, in morgan_fingerprint_from_smiles
+    raise ValueError(f"Could not build molecule from SMILES {smiles!r}.")
+ValueError: Could not build molecule from SMILES 'OC(=O)[C@@H](COCC=C)NC(=O)OCC1c2ccccc2-c2ccccc21OC(=O)[C@@H]([C@@H](C)CC)NC(=O)OCC1c2ccccc2-c2ccccc21OC(=O)[C@@H](CC(C)C)NC(=O)OCC1c2ccccc2-c2ccccc21OC(=O)[C@@H]([C@@H](C)OC(c1ccccc1)(c1ccccc1)c1ccccc1)NC(=O)OCC1c2ccccc2-c2ccccc21OC(=O)[C@@H]([C@@H](C)OC(c1ccccc1)(c1ccccc1)c1ccccc1)NC(=O)OCC1c2ccccc2-c2ccccc21OC(=O)[C@@H](Cc1cn(C=O)c2ccccc12)NC(=O)OCC1c2ccccc2-c2ccccc21OC(=O)[C@@H](CCSC)NC(=O)OCC1c2ccccc2-c2ccccc21OC(=O)[C@@H](Cc1ccccc1)NC(=O)OCC1c2ccccc2-c2ccccc21OC(=O)[C@@H]([C@@H](C)CC)NC(=O)OCC1c2ccccc2-c2ccccc21OC(=O)[C@@H](Cc1ccccc1)NC(=O)OCC1c2ccccc2-c2ccccc21N'.
+
+----------------------------------------------------------------------
+RESULT SUMMARY
+----------------------------------------------------------------------
+
+This run did not finish successfully -- no results were produced.
+See the detailed run log above for error messages.
+

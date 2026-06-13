@@ -1,0 +1,170 @@
+======================================================================
+EXPERIMENT LOG
+======================================================================
+
+'Aggregation' means the peptide clumped together during synthesis
+instead of staying dissolved -- something chemists want to predict
+and avoid. This experiment checks how well a model can predict, from
+the peptide and its synthesis conditions, whether aggregation happens.
+
+Data split:              reaction_set
+  -> Looking at every step of building each peptide, one amino acid at a time.
+
+Data representation:    one_hot
+  -> Represents each amino acid as a simple marker for which of the ~20 amino acids it is.
+
+Prediction model:        knn
+  -> K-Nearest Neighbours -- predicts based on the most similar peptides seen before.
+
+Protecting-group scheme: default_uzh_mit
+
+----------------------------------------------------------------------
+DETAILED RUN LOG
+----------------------------------------------------------------------
+
+01:40:48 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:40:48 INFO [ai4agg.cli.train_sklearn_models] TRAIN SKLEARN MODELS - STARTING
+01:40:48 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:40:48 INFO [ai4agg.cli.train_sklearn_models] Configuration:
+01:40:48 INFO [ai4agg.cli.train_sklearn_models]   Task: classification
+01:40:48 INFO [ai4agg.cli.train_sklearn_models]   Loader: reaction_set
+01:40:48 INFO [ai4agg.cli.train_sklearn_models]   Preprocessor: one_hot
+01:40:48 INFO [ai4agg.cli.train_sklearn_models]   Model: knn
+01:40:48 INFO [ai4agg.cli.train_sklearn_models]   Data path: data\combined_data.csv
+01:40:48 INFO [ai4agg.cli.train_sklearn_models]   Output path: results\experiment_grid\train\reaction_set__one_hot__knn__default_uzh_mit
+01:40:48 INFO [ai4agg.cli.train_sklearn_models]   Seed: 3245
+01:40:48 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:40:48 INFO [ai4agg.cli.train_sklearn_models] Running Split 1/5
+01:40:48 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:40:48 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=one_hot, cv_split=0, seed=3245
+01:40:48 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:40:48 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:40:48 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'one_hot' initialized
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (420,)
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 0: 2865 train, 804 test
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2865 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 482 True, 2383 False
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 804 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 148 True, 656 False
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2865 samples
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 804 test samples
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.4194, Accuracy: 0.4930 (on 71 serials)
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] Split 1/5 — F1: 0.4194  Accuracy: 0.4930
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] Running Split 2/5
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:40:52 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=one_hot, cv_split=1, seed=3245
+01:40:52 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:40:52 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:40:53 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'one_hot' initialized
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (420,)
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 1: 2872 train, 797 test
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2872 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 473 True, 2399 False
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 797 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 157 True, 640 False
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2872 samples
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 797 test samples
+01:40:56 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:40:57 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.4483, Accuracy: 0.5429 (on 70 serials)
+01:40:57 INFO [ai4agg.cli.train_sklearn_models] Split 2/5 — F1: 0.4483  Accuracy: 0.5429
+01:40:57 INFO [ai4agg.cli.train_sklearn_models] Running Split 3/5
+01:40:57 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:40:57 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=one_hot, cv_split=2, seed=3245
+01:40:57 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:40:57 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:40:57 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'one_hot' initialized
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (420,)
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 2: 2971 train, 698 test
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2971 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 520 True, 2451 False
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 698 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 110 True, 588 False
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2971 samples
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 698 test samples
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.3509, Accuracy: 0.4714 (on 70 serials)
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] Split 3/5 — F1: 0.3509  Accuracy: 0.4714
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] Running Split 4/5
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:41:01 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=one_hot, cv_split=3, seed=3245
+01:41:01 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:41:01 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'one_hot' initialized
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (420,)
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 3: 2995 train, 674 test
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2995 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 526 True, 2469 False
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 674 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 104 True, 570 False
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2995 samples
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 674 test samples
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.5455, Accuracy: 0.7143 (on 70 serials)
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] Split 4/5 — F1: 0.5455  Accuracy: 0.7143
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] Running Split 5/5
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:41:06 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=one_hot, cv_split=4, seed=3245
+01:41:06 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:41:06 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'one_hot' initialized
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (420,)
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 4: 2973 train, 696 test
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2973 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 519 True, 2454 False
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 696 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 111 True, 585 False
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2973 samples
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 696 test samples
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.5000, Accuracy: 0.6571 (on 70 serials)
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] Split 5/5 — F1: 0.5000  Accuracy: 0.6571
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] 
+[MAIN] FINAL RESULTS
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] Accuracy: 0.5757 ± 0.0945
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] F1:       0.4528 ± 0.0668
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] Raw Accuracy values: ['0.4930', '0.5429', '0.4714', '0.7143', '0.6571']
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] Raw F1 values: ['0.4194', '0.4483', '0.3509', '0.5455', '0.5000']
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] Results saved to results\experiment_grid\train\reaction_set__one_hot__knn__default_uzh_mit\results.json
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] TRAIN SKLEARN MODELS - COMPLETED
+01:41:10 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+
+----------------------------------------------------------------------
+RESULT SUMMARY
+----------------------------------------------------------------------
+
+Across repeated train/test splits, the model correctly predicted whether a peptide would aggregate in 57.6% of cases on average (+/- 9.4 percentage points).
+Its F1 score (a balance between catching aggregating peptides and not over-predicting aggregation) was 0.453 (+/- 0.067); 1.0 is perfect, 0 is worst.
+

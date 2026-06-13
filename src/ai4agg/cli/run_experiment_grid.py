@@ -12,8 +12,15 @@ from .explainability import main as explain_main
 from .explainability import PREPROCESSOR_REGISTRY as EXPLAIN_PREPROCESSOR_REGISTRY
 from .train_sklearn_models import main as train_main
 from .train_sklearn_models import LOADER_REGISTRY, PREPROCESSOR_REGISTRY
+from ..utils.experiment_logger import experiment_run_log, append_results_summary
 
-logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
+# Keep the console quiet: detailed INFO logs go into each run's log.txt instead
+# (see experiment_run_log). Only WARNING+ (and this script's own print()
+# progress messages) show up in the terminal.
+logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s", force=True)
+for _handler in logging.getLogger().handlers:
+    _handler.setLevel(logging.WARNING)
+
 logger = logging.getLogger(__name__)
 
 # Loaders to sweep. "wof_set" is excluded — it needs extra --wof_start/--wof_end
@@ -80,17 +87,18 @@ def main(
     shap_dir = output_path / "shap"
 
     combinations = list(product(loaders, preprocessors, models, pg_schemes))
-    logger.info(f"Running {len(combinations)} (loader, preprocessor, model, pg_scheme) combinations")
+    print(f"Running {len(combinations)} (loader, preprocessor, model, pg_scheme) combinations")
+    print(f"Per-run logs are written to {train_dir}/<combination>/log.txt")
 
     rows = []
-    for loader, preprocessor, model, pg_scheme in combinations:
+    for i, (loader, preprocessor, model, pg_scheme) in enumerate(combinations, 1):
         tag = f"{loader}__{preprocessor}__{model}__{pg_scheme}"
         run_dir = train_dir / tag
 
         if skip_existing and (run_dir / "results.json").exists():
-            logger.info(f"[SKIP] {tag} (results.json already exists)")
+            print(f"[{i}/{len(combinations)}] SKIP {tag} (results.json already exists)")
         else:
-            logger.info(f"[RUN] {tag}")
+            print(f"[{i}/{len(combinations)}] RUN  {tag}")
             args = [
                 "--data_path", str(data_path),
                 "--output_path", str(run_dir),
@@ -103,12 +111,15 @@ def main(
             if loader == "whole_set_shuffled":
                 args += ["--n_repeats", str(shuffled_n_repeats)]
 
-            try:
-                train_main(args, standalone_mode=False)
-            except Exception:
-                logger.exception(f"[FAIL] {tag}")
+            with experiment_run_log(run_dir, loader, preprocessor, model, pg_scheme):
+                try:
+                    train_main(args, standalone_mode=False)
+                except Exception:
+                    logger.exception(f"[FAIL] {tag}")
 
         results = _read_results_json(run_dir)
+        if not skip_existing or not (run_dir / "results.json").exists() or results:
+            append_results_summary(run_dir, results)
         row = {
             "loader": loader,
             "preprocessor": preprocessor,

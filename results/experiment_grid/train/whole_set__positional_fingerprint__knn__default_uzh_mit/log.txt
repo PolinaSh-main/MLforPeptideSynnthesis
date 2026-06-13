@@ -1,0 +1,190 @@
+======================================================================
+EXPERIMENT LOG
+======================================================================
+
+'Aggregation' means the peptide clumped together during synthesis
+instead of staying dissolved -- something chemists want to predict
+and avoid. This experiment checks how well a model can predict, from
+the peptide and its synthesis conditions, whether aggregation happens.
+
+Data split:              whole_set
+  -> Looking only at each finished peptide as a whole (one entry per peptide).
+
+Data representation:    positional_fingerprint
+  -> Like 'fingerprint', but gives more weight to amino acids added earlier during synthesis.
+
+Prediction model:        knn
+  -> K-Nearest Neighbours -- predicts based on the most similar peptides seen before.
+
+Protecting-group scheme: default_uzh_mit
+
+----------------------------------------------------------------------
+DETAILED RUN LOG
+----------------------------------------------------------------------
+
+01:39:10 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:39:10 INFO [ai4agg.cli.train_sklearn_models] TRAIN SKLEARN MODELS - STARTING
+01:39:10 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:39:10 INFO [ai4agg.cli.train_sklearn_models] Configuration:
+01:39:10 INFO [ai4agg.cli.train_sklearn_models]   Task: classification
+01:39:10 INFO [ai4agg.cli.train_sklearn_models]   Loader: whole_set
+01:39:10 INFO [ai4agg.cli.train_sklearn_models]   Preprocessor: positional_fingerprint
+01:39:10 INFO [ai4agg.cli.train_sklearn_models]   Model: knn
+01:39:10 INFO [ai4agg.cli.train_sklearn_models]   Data path: data\combined_data.csv
+01:39:10 INFO [ai4agg.cli.train_sklearn_models]   Output path: results\experiment_grid\train\whole_set__positional_fingerprint__knn__default_uzh_mit
+01:39:10 INFO [ai4agg.cli.train_sklearn_models]   Seed: 3245
+01:39:10 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:39:10 INFO [ai4agg.cli.train_sklearn_models] Running Split 1/5
+01:39:10 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:39:10 INFO [ai4agg.cli.train_sklearn_models]   loader=whole_set, preprocessor=positional_fingerprint, cv_split=0, seed=3245
+01:39:10 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:39:10 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Processing 351 unique serials
+01:39:11 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Extracted 351 whole peptide indices
+01:39:11 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Before dedup: 351 rows
+01:39:11 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] After dedup: 351 rows
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 351 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'positional_fingerprint' initialized
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (2560,)
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 0: 280 train, 71 test
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 280 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 111 True, 169 False
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 71 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 36 True, 35 False
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 280 samples
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 71 test samples
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.4561, Accuracy: 0.5634 (on 71 serials)
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] Split 1/5 — F1: 0.4561  Accuracy: 0.5634
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] Running Split 2/5
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:39:11 INFO [ai4agg.cli.train_sklearn_models]   loader=whole_set, preprocessor=positional_fingerprint, cv_split=1, seed=3245
+01:39:11 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:39:11 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Processing 351 unique serials
+01:39:11 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Extracted 351 whole peptide indices
+01:39:11 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Before dedup: 351 rows
+01:39:11 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] After dedup: 351 rows
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 351 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:39:11 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'positional_fingerprint' initialized
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (2560,)
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 1: 281 train, 70 test
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 281 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 117 True, 164 False
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 70 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 30 True, 40 False
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 281 samples
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 70 test samples
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.4400, Accuracy: 0.6000 (on 70 serials)
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] Split 2/5 — F1: 0.4400  Accuracy: 0.6000
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] Running Split 3/5
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:39:12 INFO [ai4agg.cli.train_sklearn_models]   loader=whole_set, preprocessor=positional_fingerprint, cv_split=2, seed=3245
+01:39:12 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:39:12 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Processing 351 unique serials
+01:39:12 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Extracted 351 whole peptide indices
+01:39:12 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Before dedup: 351 rows
+01:39:12 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] After dedup: 351 rows
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 351 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:39:12 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'positional_fingerprint' initialized
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (2560,)
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 2: 281 train, 70 test
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 281 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 120 True, 161 False
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 70 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 27 True, 43 False
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 281 samples
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 70 test samples
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.4444, Accuracy: 0.5714 (on 70 serials)
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] Split 3/5 — F1: 0.4444  Accuracy: 0.5714
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] Running Split 4/5
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:39:13 INFO [ai4agg.cli.train_sklearn_models]   loader=whole_set, preprocessor=positional_fingerprint, cv_split=3, seed=3245
+01:39:13 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:39:13 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Processing 351 unique serials
+01:39:13 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Extracted 351 whole peptide indices
+01:39:13 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Before dedup: 351 rows
+01:39:13 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] After dedup: 351 rows
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 351 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'positional_fingerprint' initialized
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (2560,)
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 3: 281 train, 70 test
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 281 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 122 True, 159 False
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 70 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 25 True, 45 False
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 281 samples
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 70 test samples
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.4583, Accuracy: 0.6286 (on 70 serials)
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] Split 4/5 — F1: 0.4583  Accuracy: 0.6286
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] Running Split 5/5
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:39:13 INFO [ai4agg.cli.train_sklearn_models]   loader=whole_set, preprocessor=positional_fingerprint, cv_split=4, seed=3245
+01:39:13 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:39:13 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Processing 351 unique serials
+01:39:13 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Extracted 351 whole peptide indices
+01:39:13 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] Before dedup: 351 rows
+01:39:13 INFO [ai4agg.utils.loaders] [make_whole_peptide_set] After dedup: 351 rows
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 351 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:39:13 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'positional_fingerprint' initialized
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (2560,)
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 4: 281 train, 70 test
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 281 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 118 True, 163 False
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 70 rows, columns: ['peptide', 'serial', 'aggregation', 'first_diff_clean', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 29 True, 41 False
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: knn
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 281 samples
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 70 test samples
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.4151, Accuracy: 0.5571 (on 70 serials)
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] Split 5/5 — F1: 0.4151  Accuracy: 0.5571
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] 
+[MAIN] FINAL RESULTS
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] Accuracy: 0.5841 ± 0.0266
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] F1:       0.4428 ± 0.0155
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] Raw Accuracy values: ['0.5634', '0.6000', '0.5714', '0.6286', '0.5571']
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] Raw F1 values: ['0.4561', '0.4400', '0.4444', '0.4583', '0.4151']
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] Results saved to results\experiment_grid\train\whole_set__positional_fingerprint__knn__default_uzh_mit\results.json
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] TRAIN SKLEARN MODELS - COMPLETED
+01:39:14 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+
+----------------------------------------------------------------------
+RESULT SUMMARY
+----------------------------------------------------------------------
+
+Across repeated train/test splits, the model correctly predicted whether a peptide would aggregate in 58.4% of cases on average (+/- 2.7 percentage points).
+Its F1 score (a balance between catching aggregating peptides and not over-predicting aggregation) was 0.443 (+/- 0.015); 1.0 is perfect, 0 is worst.
+

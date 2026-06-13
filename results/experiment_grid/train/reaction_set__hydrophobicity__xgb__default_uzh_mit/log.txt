@@ -1,0 +1,170 @@
+======================================================================
+EXPERIMENT LOG
+======================================================================
+
+'Aggregation' means the peptide clumped together during synthesis
+instead of staying dissolved -- something chemists want to predict
+and avoid. This experiment checks how well a model can predict, from
+the peptide and its synthesis conditions, whether aggregation happens.
+
+Data split:              reaction_set
+  -> Looking at every step of building each peptide, one amino acid at a time.
+
+Data representation:    hydrophobicity
+  -> Uses how water-repelling ('hydrophobic') each amino acid is, at every position in the peptide.
+
+Prediction model:        xgb
+  -> XGBoost -- a strong tree-based model that corrects its own mistakes step by step.
+
+Protecting-group scheme: default_uzh_mit
+
+----------------------------------------------------------------------
+DETAILED RUN LOG
+----------------------------------------------------------------------
+
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] TRAIN SKLEARN MODELS - STARTING
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] Configuration:
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   Task: classification
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   Loader: reaction_set
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   Preprocessor: hydrophobicity
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   Model: xgb
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   Data path: data\combined_data.csv
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   Output path: results\experiment_grid\train\reaction_set__hydrophobicity__xgb__default_uzh_mit
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   Seed: 3245
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] Running Split 1/5
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=hydrophobicity, cv_split=0, seed=3245
+01:45:44 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'hydrophobicity' initialized
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (20,)
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 0: 2865 train, 804 test
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2865 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 482 True, 2383 False
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 804 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 148 True, 656 False
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: xgb
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2865 samples
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 804 test samples
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.4286, Accuracy: 0.5493 (on 71 serials)
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] Split 1/5 — F1: 0.4286  Accuracy: 0.5493
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] Running Split 2/5
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=hydrophobicity, cv_split=1, seed=3245
+01:45:44 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'hydrophobicity' initialized
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (20,)
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 1: 2872 train, 797 test
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2872 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 473 True, 2399 False
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 797 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 157 True, 640 False
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: xgb
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2872 samples
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 797 test samples
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.5106, Accuracy: 0.6714 (on 70 serials)
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] Split 2/5 — F1: 0.5106  Accuracy: 0.6714
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] Running Split 3/5
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:45:44 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=hydrophobicity, cv_split=2, seed=3245
+01:45:44 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:45:44 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'hydrophobicity' initialized
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (20,)
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 2: 2971 train, 698 test
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2971 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 520 True, 2451 False
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 698 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 110 True, 588 False
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: xgb
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2971 samples
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 698 test samples
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.3333, Accuracy: 0.5429 (on 70 serials)
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] Split 3/5 — F1: 0.3333  Accuracy: 0.5429
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] Running Split 4/5
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:45:45 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=hydrophobicity, cv_split=3, seed=3245
+01:45:45 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'hydrophobicity' initialized
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (20,)
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 3: 2995 train, 674 test
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2995 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 526 True, 2469 False
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 674 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 104 True, 570 False
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: xgb
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2995 samples
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 674 test samples
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.5455, Accuracy: 0.7143 (on 70 serials)
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] Split 4/5 — F1: 0.5455  Accuracy: 0.7143
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] Running Split 5/5
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] 
+[load_data] Starting data loading and preprocessing
+01:45:45 INFO [ai4agg.cli.train_sklearn_models]   loader=reaction_set, preprocessor=hydrophobicity, cv_split=4, seed=3245
+01:45:45 INFO [ai4agg.utils.loaders] 
+[make_reaction_set] Loading data from data\combined_data.csv
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] After loader: 3669 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] Preprocessor 'hydrophobicity' initialized
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] After preprocessing: input column added with shape examples
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] First input shape: (20,)
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] CV split 4: 2973 train, 696 test
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] TRAIN: 2973 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 519 True, 2454 False
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data] TEST: 696 rows, columns: ['serial', 'peptide', 'first_diff_clean', 'aggregation', 'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme', 'machine', 'coupling_strokes', 'deprotection_strokes', 'flow_rate', 'temp_reactor_1', 'first_area', 'first_height', 'first_width', 'prev_area', 'prev_height', 'prev_width', 'prev_diff', 'input']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [load_data]   aggregation: 111 True, 585 False
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] 
+[train] Training classification model: xgb
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Train set: 2973 samples
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Model trained successfully
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Predictions made on 696 test samples
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] Prediction probabilities computed
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] [train] RESULTS — F1: 0.3182, Accuracy: 0.5714 (on 70 serials)
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] Split 5/5 — F1: 0.3182  Accuracy: 0.5714
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] 
+[MAIN] FINAL RESULTS
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] Accuracy: 0.6099 ± 0.0698
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] F1:       0.4272 ± 0.0913
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] Raw Accuracy values: ['0.5493', '0.6714', '0.5429', '0.7143', '0.5714']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] Raw F1 values: ['0.4286', '0.5106', '0.3333', '0.5455', '0.3182']
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] Results saved to results\experiment_grid\train\reaction_set__hydrophobicity__xgb__default_uzh_mit\results.json
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] TRAIN SKLEARN MODELS - COMPLETED
+01:45:45 INFO [ai4agg.cli.train_sklearn_models] ================================================================================
+
+----------------------------------------------------------------------
+RESULT SUMMARY
+----------------------------------------------------------------------
+
+Across repeated train/test splits, the model correctly predicted whether a peptide would aggregate in 61.0% of cases on average (+/- 7.0 percentage points).
+Its F1 score (a balance between catching aggregating peptides and not over-predicting aggregation) was 0.427 (+/- 0.091); 1.0 is perfect, 0 is worst.
+
