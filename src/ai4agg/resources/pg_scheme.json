@@ -1,0 +1,15 @@
+{
+  "default_uzh_mit": {
+    "description": "Standard Fmoc-SPPS, both UZH and MIT datasets",
+    "solvent": "DMF",
+    "resin": "Rink",
+    "coupling_agent": "HATU",
+    "pg_map": {
+      "G": "none", "A": "none", "V": "none", "L": "none", "I": "none", "F": "none", "P": "none", "M": "none",
+      "C": "Trt", "H": "Trt", "N": "Trt", "Q": "Trt",
+      "R": "Pbf",
+      "Y": "tBu", "S": "tBu", "T": "tBu", "D": "OtBu", "E": "OtBu",
+      "K": "Boc", "W": "Boc"
+    }
+  }
+}

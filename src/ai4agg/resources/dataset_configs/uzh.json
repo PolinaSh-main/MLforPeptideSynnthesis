@@ -1,0 +1,19 @@
+{
+  "name": "uzh",
+  "prefix": "uzh_",
+  "column_map": {
+    "serial": "serial",
+    "amino_acid": "amino_acid",
+    "pre_chain": "pre-chain",
+    "first_diff": "first_diff"
+  },
+  "constants": {
+    "coupling_agent": "HATU",
+    "solvent": "DMF",
+    "resin": "Rink",
+    "temp_coupling": null
+  },
+  "pg_scheme": "default_uzh_mit",
+  "serial_dtype": "int",
+  "index_col": 0
+}

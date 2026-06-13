@@ -1,0 +1,19 @@
+{
+  "name": "mit",
+  "prefix": "mit_",
+  "column_map": {
+    "serial": "serial",
+    "amino_acid": "amino_acid",
+    "pre_chain": "pre-chain",
+    "first_diff": "first_diff",
+    "coupling_agent": "coupling_agent",
+    "temp_coupling": "temp_coupling"
+  },
+  "constants": {
+    "solvent": "DMF",
+    "resin": "Rink"
+  },
+  "pg_scheme": "default_uzh_mit",
+  "serial_dtype": "str",
+  "index_col": null
+}
