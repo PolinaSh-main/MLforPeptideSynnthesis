@@ -1,3 +1,4 @@
+import json
 import random
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -12,6 +13,21 @@ from sklearn.model_selection import KFold, train_test_split
 
 AA_TO_SMILES_PATH = files("ai4agg") / "resources/onelet_to_smiles.csv"
 PROTECTED_AA_TO_SMILES_PATH = files("ai4agg") / "resources/protected_onelet_to_smiles.csv"
+HYDROPHOBICITY_PATH = files("ai4agg") / "resources/hydrophobicity_clean.csv"
+PG_SCHEME_PATH = files("ai4agg") / "resources/pg_scheme.json"
+
+
+def load_pg_scheme(scheme_name: str, pg_scheme_path: Optional[Union[str, Path]] = None) -> Dict[str, str]:
+    """Load a protecting-group scheme (abbrev -> pg) by name from pg_scheme.json."""
+    with open(pg_scheme_path or PG_SCHEME_PATH) as f:
+        schemes = json.load(f)
+
+    if scheme_name not in schemes:
+        raise ValueError(
+            f"Unknown pg_scheme '{scheme_name}'. Available schemes: {list(schemes.keys())}"
+        )
+
+    return schemes[scheme_name]["pg_map"]
 
 
 def seed_everything(seed: int):

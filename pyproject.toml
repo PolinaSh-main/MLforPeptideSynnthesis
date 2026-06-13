@@ -3,7 +3,7 @@ name = "ai4agg"
 version = "0.0.1"
 description = "Describe your project here."
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.14"
 authors = [
     { name = "Marvin Alberts", email = "marvin.alberts@ibm.com" }
 ]

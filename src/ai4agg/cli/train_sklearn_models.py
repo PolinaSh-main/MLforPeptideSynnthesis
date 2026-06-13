@@ -25,7 +25,9 @@ from ..utils.loaders import (
     make_wof_peptide_set,
 )
 from ..utils.preprocessors import (
+    CompositePreprocessor,
     FingerprintPreprocessor,
+    HydrophobicityPreprocessor,
     OccurencyVectorPreprocessor,
     OneHotPreprocessor,
     PositionalFingerprintPreprocessor,
@@ -34,7 +36,10 @@ from ..utils.preprocessors import (
     SequencePreprocessor,
     WholePeptideFingerprintPreprocessor,
 )
+from ..features import ProtectedFingerprintFeature, HydrophobicityFeature
 from ..utils.utils import seed_everything, split_peptide_set
+from ..utils.data_logger import log_dataframe
+from functools import partial
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -57,6 +62,10 @@ PREPROCESSOR_REGISTRY = {
     "whole_peptide_fingerprint": WholePeptideFingerprintPreprocessor,
     "protected_whole_peptide_fingerprint": ProtectedWholePeptideFingerprintPreprocessor,
     "occurency": OccurencyVectorPreprocessor,
+    "hydrophobicity": HydrophobicityPreprocessor,
+    # New features can be combined here without touching any other code —
+    # see src/ai4agg/features/README.md
+    "protected_fp_hydrophob": partial(CompositePreprocessor, [ProtectedFingerprintFeature, HydrophobicityFeature]),
 }
 
 # Classification-only models
@@ -88,39 +97,69 @@ def load_data(
     seed: int = 3245,
     **kwargs,
 ) -> Dict[str, pd.DataFrame]:
-
+    logger.info(f"\n[load_data] Starting data loading and preprocessing")
+    logger.info(f"  loader={loader}, preprocessor={preprocessor}, cv_split={cv_split}, seed={seed}")
+    
     dataset = LOADER_REGISTRY[loader](data_path, seed=seed, **kwargs)  # type: ignore
+    logger.info(f"[load_data] After loader: {len(dataset)} rows, columns: {dataset.columns.tolist()}")
 
     preprocessor_instance = PREPROCESSOR_REGISTRY[preprocessor](
         dataset,
         random_state=seed,
         **kwargs,
     )
-    dataset["input"] = dataset["peptide"].map(preprocessor_instance)
+    logger.info(f"[load_data] Preprocessor '{preprocessor}' initialized")
+    
+    if isinstance(preprocessor_instance, CompositePreprocessor):
+        dataset["input"] = dataset.apply(preprocessor_instance, axis=1)
+    else:
+        dataset["input"] = dataset["peptide"].map(preprocessor_instance)
+    logger.info(f"[load_data] After preprocessing: input column added with shape examples")
+    if len(dataset) > 0:
+        first_input = dataset["input"].iloc[0]
+        logger.info(f"[load_data] First input shape: {first_input.shape if hasattr(first_input, 'shape') else 'N/A'}")
+
 
     if loader == "whole_set_shuffled":
         train_set, test_set = train_test_split(dataset, random_state=seed)
         dataset_dict = {"train": train_set, "test": test_set}
+        logger.info(f"[load_data] Train/test split: {len(train_set)} train, {len(test_set)} test")
     else:
         dataset_dict = split_peptide_set(dataset, val=False, cv_split=cv_split, seed=seed)
+        logger.info(f"[load_data] CV split {cv_split}: {len(dataset_dict['train'])} train, {len(dataset_dict['test'])} test")
+
+    # Log split statistics
+    for split_name in ["train", "test"]:
+        if split_name in dataset_dict:
+            df = dataset_dict[split_name]
+            logger.info(f"[load_data] {split_name.upper()}: {len(df)} rows, columns: {df.columns.tolist()}")
+            if "aggregation" in df.columns:
+                agg_count = df["aggregation"].sum()
+                logger.info(f"[load_data]   aggregation: {agg_count} True, {len(df) - agg_count} False")
 
     return dataset_dict
 
 
 def train(dataset_dict: Dict[str, pd.DataFrame], model: str) -> Tuple[Any, Any, pd.DataFrame]:
-
+    logger.info(f"\n[train] Training classification model: {model}")
+    logger.info(f"[train] Train set: {len(dataset_dict['train'])} samples")
+    
     classifier = MODEL_REGISTRY[model]()
     classifier.fit(
         np.stack(dataset_dict["train"]["input"].to_list()),
         np.stack(dataset_dict["train"]["aggregation"].to_list()),
     )
+    logger.info(f"[train] Model trained successfully")
 
     test_set = dataset_dict["test"].copy()
     test_set["prediction"] = classifier.predict(np.stack(test_set["input"].to_list()))
+    logger.info(f"[train] Predictions made on {len(test_set)} test samples")
+    
     if hasattr(classifier, "predict_proba"):
         test_set["prediction_probability"] = classifier.predict_proba(
             np.stack(test_set["input"].to_list())
         )[:, 1]
+        logger.info(f"[train] Prediction probabilities computed")
 
     ground_truth = []
     predictions = []
@@ -131,6 +170,8 @@ def train(dataset_dict: Dict[str, pd.DataFrame], model: str) -> Tuple[Any, Any, 
 
     f1 = f1_score(ground_truth, predictions)
     accuracy = accuracy_score(ground_truth, predictions)
+    logger.info(f"[train] RESULTS — F1: {f1:.4f}, Accuracy: {accuracy:.4f} (on {len(ground_truth)} serials)")
+    log_dataframe(test_set, "test_set", "AFTER_PREDICTIONS")
     return f1, accuracy, test_set
 
 
@@ -145,6 +186,9 @@ def train_regression(
     model: str,
     target_column: str = "first_diff_clean",
 ) -> Tuple[float, float, pd.DataFrame]:
+    logger.info(f"\n[train_regression] Training regression model: {model}")
+    logger.info(f"[train_regression] Train set: {len(dataset_dict['train'])} samples")
+    logger.info(f"[train_regression] Target column: {target_column}")
 
     if model not in REGRESSION_MODEL_REGISTRY:
         raise ValueError(
@@ -157,14 +201,18 @@ def train_regression(
         np.stack(dataset_dict["train"]["input"].to_list()),
         np.stack(dataset_dict["train"][target_column].to_list()),
     )
+    logger.info(f"[train_regression] Model trained successfully")
 
     test_set = dataset_dict["test"].copy()
     test_set["prediction"] = regressor.predict(np.stack(test_set["input"].to_list()))
+    logger.info(f"[train_regression] Predictions made on {len(test_set)} test samples")
 
     y_true = test_set[target_column].to_numpy(dtype=float)
     y_pred = test_set["prediction"].to_numpy(dtype=float)
     mse = float(mean_squared_error(y_true, y_pred))
     pearson = pearson_correlation(y_true, y_pred)
+    logger.info(f"[train_regression] RESULTS — MSE: {mse:.4f}, Pearson: {pearson:.4f}")
+    log_dataframe(test_set, "test_set", "AFTER_REGRESSION_PREDICTIONS")
     return mse, pearson, test_set
 
 
@@ -219,8 +267,11 @@ def save_predictions(
               help="Number of repeats for whole_set_shuffled loader.")
 @click.option("--wof_start", type=int, required=False)
 @click.option("--wof_end", type=int, required=False)
-@click.option("--wof_drop", type=bool, required=False)
+@click.option("--wof_drop", type=bool, default=False)
 @click.option("--occurency_vector_normalise", type=bool, required=False)
+@click.option("--pg_scheme", type=str, default="default_uzh_mit", show_default=True,
+              help="Name of the protecting-group scheme (key in resources/pg_scheme.json), "
+                   "used by the 'hydrophobicity' and 'protected_fp_hydrophob' preprocessors.")
 @click.option("--save_step_predictions", is_flag=True,
               help="Save per-step predictions to step_predictions.csv in output_path.")
 def main(
@@ -235,10 +286,27 @@ def main(
     n_repeats: int,
     wof_start: Optional[int],
     wof_end: Optional[int],
-    wof_drop: Optional[bool],
+    wof_drop: bool,
     occurency_vector_normalise: Optional[bool],
+    pg_scheme: str,
     save_step_predictions: bool,
 ) -> None:
+    logger.info("="*80)
+    logger.info("TRAIN SKLEARN MODELS - STARTING")
+    logger.info("="*80)
+    logger.info(f"Configuration:")
+    logger.info(f"  Task: {task}")
+    logger.info(f"  Loader: {loader}")
+    logger.info(f"  Preprocessor: {preprocessor}")
+    logger.info(f"  Model: {model}")
+    if task == "regression":
+        logger.info(f"  Target column: {target_column}")
+    logger.info(f"  Data path: {data_path}")
+    logger.info(f"  Output path: {output_path}")
+    logger.info(f"  Seed: {seed}")
+    if loader == "whole_set_shuffled":
+        logger.info(f"  N repeats: {n_repeats}")
+    logger.info("="*80)
 
     # ── Early validation ────────────────────────────────────────────────────
     if task == "regression" and model not in REGRESSION_MODEL_REGISTRY:
@@ -252,6 +320,11 @@ def main(
     ):
         raise click.UsageError(
             f"Model '{model}' requires loader='whole_set' and preprocessor='sequence'."
+        )
+
+    if loader == "wof_set" and (wof_start is None or wof_end is None):
+        raise click.UsageError(
+            "Loader 'wof_set' requires --wof_start and --wof_end to be specified."
         )
 
     seed_everything(seed)
@@ -273,6 +346,7 @@ def main(
                 wof_end=wof_end,
                 wof_drop=wof_drop,
                 occurency_vector_normalise=occurency_vector_normalise,
+                pg_scheme=pg_scheme,
                 seed=i,
             )
 
@@ -306,6 +380,7 @@ def main(
                 wof_end=wof_end,
                 wof_drop=wof_drop,
                 occurency_vector_normalise=occurency_vector_normalise,
+                pg_scheme=pg_scheme,
                 seed=seed,
             )
 
@@ -333,13 +408,21 @@ def main(
 
     if save_step_predictions:
         save_predictions(prediction_frames, output_path, target_column)
+        logger.info(f"[MAIN] Step predictions saved to {output_path / 'step_predictions.csv'}")
 
+    logger.info(f"\n[MAIN] FINAL RESULTS")
+    logger.info("="*80)
+    
     with (output_path / "results.json").open("w") as results_file:
         if task == "regression":
             logger.info(
-                f"Final — MSE: {np.mean(mse):.4f}±{np.std(mse):.4f}  "
-                f"Pearson: {np.nanmean(pearson):.4f}±{np.nanstd(pearson):.4f}"
+                f"MSE:     {np.mean(mse):.4f} ± {np.std(mse):.4f}"
             )
+            logger.info(
+                f"Pearson: {np.nanmean(pearson):.4f} ± {np.nanstd(pearson):.4f}"
+            )
+            logger.info(f"Raw MSE values: {[f'{v:.4f}' for v in mse]}")
+            logger.info(f"Raw Pearson values: {[f'{v:.4f}' if not np.isnan(v) else 'NaN' for v in pearson]}")
             json.dump(
                 {
                     "task": "regression",
@@ -362,9 +445,13 @@ def main(
             )
         else:
             logger.info(
-                f"Final — Accuracy: {np.mean(accuracy):.4f}±{np.std(accuracy):.4f}  "
-                f"F1: {np.mean(f1):.4f}±{np.std(f1):.4f}"
+                f"Accuracy: {np.mean(accuracy):.4f} ± {np.std(accuracy):.4f}"
             )
+            logger.info(
+                f"F1:       {np.mean(f1):.4f} ± {np.std(f1):.4f}"
+            )
+            logger.info(f"Raw Accuracy values: {[f'{v:.4f}' for v in accuracy]}")
+            logger.info(f"Raw F1 values: {[f'{v:.4f}' for v in f1]}")
             json.dump(
                 {
                     "task": "classification",
@@ -384,3 +471,9 @@ def main(
                 results_file,
                 indent=2,
             )
+    
+    logger.info(f"Results saved to {output_path / 'results.json'}")
+    logger.info("="*80)
+    logger.info("TRAIN SKLEARN MODELS - COMPLETED")
+    logger.info("="*80)
+

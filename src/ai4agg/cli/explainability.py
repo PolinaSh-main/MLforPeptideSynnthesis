@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import json
 import click
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,15 +16,20 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
+from functools import partial
+
 from ..utils.loaders import make_agg_point_peptide_set
 from ..utils.preprocessors import (
+    CompositePreprocessor,
     FingerprintPreprocessor,
+    HydrophobicityPreprocessor,
     OccurencyVectorPreprocessor,
     PositionalFingerprintPreprocessor,
     ProtectedFingerprintPreprocessor,
     ProtectedWholePeptideFingerprintPreprocessor,
     WholePeptideFingerprintPreprocessor,
 )
+from ..features import ProtectedFingerprintFeature, HydrophobicityFeature
 from ..utils.utils import seed_everything
 
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +44,8 @@ PREPROCESSOR_REGISTRY = {
     "positional_fingerprint": PositionalFingerprintPreprocessor,
     "whole_peptide_fingerprint": WholePeptideFingerprintPreprocessor,
     "protected_whole_peptide_fingerprint": ProtectedWholePeptideFingerprintPreprocessor,
+    "hydrophobicity": HydrophobicityPreprocessor,
+    "protected_fp_hydrophob": partial(CompositePreprocessor, [ProtectedFingerprintFeature, HydrophobicityFeature]),
 }
 
 # ── Model registry (tree models → TreeExplainer; others → KernelExplainer) ──
@@ -108,6 +116,10 @@ def _build_feature_names(
             AA_DISPLAY_NAMES.get(aa, aa) for aa in preprocessor_instance.all_aa
         ]
 
+    if hasattr(preprocessor_instance, "feature_names"):
+        # HydrophobicityPreprocessor / CompositePreprocessor know their own names
+        return preprocessor_instance.feature_names()
+
     if preprocessor_key in (
         "fingerprint",
         "protected_fingerprint",
@@ -140,6 +152,7 @@ def load_data(
     normalise: bool,
     n_fingerprint_bits: int,
     seed: int,
+    pg_scheme: str = "default_uzh_mit",
 ) -> Tuple[List[str], pd.DataFrame]:
 
     data = make_agg_point_peptide_set(data_path)
@@ -151,8 +164,12 @@ def load_data(
         normalise=normalise,
         occurency_vector_normalise=normalise,
         n_fingerprint_bits=n_fingerprint_bits,
+        pg_scheme=pg_scheme,
     )
-    data["input"] = data["peptide"].map(preprocessor)
+    if isinstance(preprocessor, CompositePreprocessor):
+        data["input"] = data.apply(preprocessor, axis=1)
+    else:
+        data["input"] = data["peptide"].map(preprocessor)
     data["label"] = data["aggregation"].map(lambda agg: [0, 1] if agg else [1, 0])
 
     feature_names = _build_feature_names(
@@ -261,12 +278,113 @@ def train_and_explain(
         np.concatenate(x_test_all),
         np.concatenate(shap_values_all),
     )
+    
+def aggregate_results(output_path: Path) -> None:
+    """
+    Собирает все results.json в output_path и пишет all_results.csv.
+    Если файла нет — ставит NaN.
+    """
+
+    output_path = Path(output_path)
+
+    files = list(output_path.rglob("results.json"))
+    print(f"[INFO] Found {len(files)} results.json in {output_path}", flush=True)
+
+    rows = []
+
+    for f in files:
+        tag = f.parent.name
+        parts = tag.split("__")
+
+        row = {
+            "tag": tag,
+            "era": parts[0] if len(parts) > 0 else "",
+            "loader": parts[1] if len(parts) > 1 else "",
+            "preprocessor": parts[2] if len(parts) > 2 else "",
+            "model": parts[3] if len(parts) > 3 else "",
+        }
+
+        try:
+            with f.open("r") as fp:
+                r = json.load(fp)
+
+            task = r.get("task", "classification")
+            row["task"] = task
+
+            if task == "regression":
+                row["metric_primary"] = r.get("mse", {}).get("mean", np.nan)
+                row["metric_primary_std"] = r.get("mse", {}).get("std", np.nan)
+                row["metric_secondary"] = r.get("pearson", {}).get("mean", np.nan)
+                row["metric_secondary_std"] = r.get("pearson", {}).get("std", np.nan)
+            else:
+                row["metric_primary"] = r.get("f1", {}).get("mean", np.nan)
+                row["metric_primary_std"] = r.get("f1", {}).get("std", np.nan)
+                row["metric_secondary"] = r.get("accuracy", {}).get("mean", np.nan)
+                row["metric_secondary_std"] = r.get("accuracy", {}).get("std", np.nan)
+
+            row["status"] = "success"
+
+        except Exception as e:
+            print(f"[ERROR] Failed to parse {f}: {e}", flush=True)
+
+            row.update({
+                "task": "unknown",
+                "metric_primary": np.nan,
+                "metric_primary_std": np.nan,
+                "metric_secondary": np.nan,
+                "metric_secondary_std": np.nan,
+                "status": "failed",
+            })
+
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    if df.empty:
+        print("[WARN] No results collected", flush=True)
+        out = output_path / "all_results.csv"
+        df.to_csv(out, index=False)
+        print(f"[INFO] Saved empty → {out}", flush=True)
+        return
+
+    clf_df = df[df["task"] == "classification"].sort_values(
+        "metric_primary", ascending=False
+    )
+    reg_df = df[df["task"] == "regression"].sort_values(
+        "metric_primary", ascending=True
+    )
+
+    df = pd.concat([clf_df, reg_df], ignore_index=True)
+
+    out = output_path / "all_results.csv"
+    df.to_csv(out, index=False)
+
+    print(f"[INFO] Saved → {out}", flush=True)
+
+    print("\n[INFO] TOP classification:")
+    if not clf_df.empty:
+        print(
+            clf_df[
+                ["tag", "metric_primary", "metric_primary_std",
+                 "metric_secondary", "metric_secondary_std", "status"]
+            ].head(10).to_string(index=False)
+        )
+
+    print("\n[INFO] TOP regression:")
+    if not reg_df.empty:
+        print(
+            reg_df[
+                ["tag", "metric_primary", "metric_primary_std",
+                 "metric_secondary", "metric_secondary_std", "status"]
+            ].to_string(index=False)
+        )
+
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
 @click.command()
-@click.option("--data_path", type=Path, required=True)
+@click.option("--data_path", type=Path, required=False, default=None)
 @click.option("--output_path", type=Path, required=True)
 @click.option(
     "--preprocessor",
@@ -296,6 +414,10 @@ def train_and_explain(
     default=None,
     help="Override SHAP colour-bar label. Auto-detected from preprocessor if omitted.",
 )
+@click.option("--aggregate_only", is_flag=True, default=False)
+@click.option("--pg_scheme", type=str, default="default_uzh_mit", show_default=True,
+              help="Name of the protecting-group scheme (key in resources/pg_scheme.json), "
+                   "used by the 'hydrophobicity' and 'protected_fp_hydrophob' preprocessors.")
 def main(
     data_path: Path,
     output_path: Path,
@@ -307,15 +429,22 @@ def main(
     n_repeats: int,
     seed: int,
     color_bar_label: Optional[str],
+    aggregate_only: bool,
+    pg_scheme: str,
 ) -> None:
 
     seed_everything(seed)
     output_path.mkdir(parents=True, exist_ok=True)
 
+    if aggregate_only:
+        logger.info("Running aggregation only")
+        aggregate_results(output_path)
+        return
+
     logger.info(f"Preprocessor: {preprocessor}  |  Model: {model}")
     logger.info("Loading data")
     feature_names, data = load_data(
-        data_path, preprocessor, motifs, normalise, n_fingerprint_bits, seed
+        data_path, preprocessor, motifs, normalise, n_fingerprint_bits, seed, pg_scheme
     )
 
     logger.info("Training models + computing SHAP values")
@@ -339,6 +468,8 @@ def main(
         "positional_fingerprint": "Position-weighted Fingerprint Bit Value",
         "whole_peptide_fingerprint": "Whole-peptide Fingerprint Bit Value",
         "protected_whole_peptide_fingerprint": "Protected Whole-peptide Fingerprint Bit Value",
+        "hydrophobicity": "Residue logP (PG-corrected)",
+        "protected_fp_hydrophob": "Feature Value",
     }
     cbar_label = color_bar_label or _cbar_defaults.get(preprocessor, "Feature Value")
 
@@ -380,3 +511,6 @@ def main(
     shap_df.to_csv(out_csv, index=False)
     logger.info(f"Saved SHAP ranking → {out_csv}")
     logger.info("Top-10 features:\n" + shap_df.head(10).to_string(index=False))
+    if aggregate_only:
+        logger.info("Saving results aggregation")
+        aggregate_results(output_path)

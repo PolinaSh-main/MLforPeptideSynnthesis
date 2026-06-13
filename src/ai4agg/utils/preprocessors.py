@@ -6,6 +6,8 @@ import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 
 from .utils import FingerPrintCalculator, PROTECTED_AA_TO_SMILES_PATH
+from ..features.base import BaseFeature
+from ..features.hydrophobicity import HydrophobicityFeature
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -158,15 +160,14 @@ class WholePeptideFingerprintPreprocessor(CorePreprocessor):
 class ProtectedWholePeptideFingerprintPreprocessor(CorePreprocessor):
     """Single Morgan fingerprint for the entire peptide built from Fmoc-AA(PG)-OH SMILES.
 
-    Builds a pseudo-whole-peptide SMILES by concatenating protected residue SMILES
-    (C-terminus to N-terminus, same order as smilifier), then computes one Morgan
-    fingerprint for the whole molecule.
+    Uses the protected SMILES with smilifier to properly assemble the peptide
+    (instead of concatenating full SMILES which creates invalid molecules).
     Output shape: (n_fingerprint_bits,) — fixed regardless of peptide length.
 
-    Note: The concatenated protected SMILES is a heuristic representation of the
-    on-resin intermediate. It does not model full amide bond formation between
-    protected residues, but captures the chemical environment of protecting groups
-    which is the main signal added vs. native fingerprints.
+    The smilifier method handles:
+    - Proper backbone assembly (C→N direction)
+    - Correct amide bond formation
+    - Protecting group context
     """
 
     def __init__(self, data: pd.DataFrame, padding: bool = True, n_fingerprint_bits: int = 128, random_state: int = 3245, **kwargs):  # noqa
@@ -179,17 +180,11 @@ class ProtectedWholePeptideFingerprintPreprocessor(CorePreprocessor):
         )
 
     def __call__(self, peptide: str) -> np.ndarray:
-        # Build concatenated protected SMILES C→N (same direction as smilifier)
-        sequence_reversed = list(peptide)[::-1]
-        smiles_parts = [
-            self.fingerprint_calculator.onelet_smiles_dict[aa]
-            for aa in sequence_reversed
-        ]
-        # Append free amine cap as in smilifier
-        smiles_parts.append("N")
-        concatenated_smiles = "".join(smiles_parts)
+        # Use smilifier to properly assemble protected peptide SMILES
+        # This handles all the chemistry correctly (backbone + protecting groups)
+        peptide_smiles = self.fingerprint_calculator.smilifier(peptide)
         return np.array(
-            self.fingerprint_calculator.morgan_fingerprint_from_smiles(concatenated_smiles)
+            self.fingerprint_calculator.morgan_fingerprint_from_smiles(peptide_smiles)
         )
 
 
@@ -224,3 +219,46 @@ class OccurencyVectorPreprocessor(CorePreprocessor):
         for i, aa in enumerate(self.all_aa):
             occurency_vector[i] = peptide.count(aa)
         return occurency_vector
+
+
+class HydrophobicityPreprocessor(CorePreprocessor):
+    """Per-residue hydrophobicity (Consensus logP, PG-aware) — see HydrophobicityFeature."""
+
+    def __init__(self, data: pd.DataFrame, padding: bool = True, random_state: int = 3245, pg_scheme: str | dict | None = "default_uzh_mit", **kwargs) -> None:  # noqa
+        super().__init__(data, padding, random_state)
+        self.feature = HydrophobicityFeature(self.max_sequence_len, padding, pg_scheme=pg_scheme, **kwargs)
+        self.feature.fit(data)
+
+    def __call__(self, peptide: str) -> np.ndarray:
+        return self.feature.transform(pd.Series({"peptide": peptide}))
+
+    def feature_names(self) -> list[str]:
+        return self.feature.feature_names()
+
+
+class CompositePreprocessor(CorePreprocessor):
+    """Concatenates a list of `BaseFeature`s into a single feature vector.
+
+    Add a new feature to any preprocessor by writing one file in
+    src/ai4agg/features/ implementing BaseFeature, then listing its class
+    here — see README for details.
+    """
+
+    def __init__(self, feature_classes: list[type[BaseFeature]], data: pd.DataFrame, padding: bool = True, random_state: int = 3245, **kwargs) -> None:  # noqa
+        super().__init__(data, padding, random_state)
+        self.features: list[BaseFeature] = []
+        for feature_class in feature_classes:
+            feature = feature_class(self.max_sequence_len, padding, **kwargs)
+            feature.fit(data)
+            self.features.append(feature)
+
+    def __call__(self, row: pd.Series | str) -> np.ndarray:
+        if isinstance(row, str):
+            row = pd.Series({"peptide": row})
+        return np.concatenate([feature.transform(row) for feature in self.features])
+
+    def feature_names(self) -> list[str]:
+        names: list[str] = []
+        for feature in self.features:
+            names.extend(feature.feature_names())
+        return names
