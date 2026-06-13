@@ -30,6 +30,7 @@ from ..utils.preprocessors import (
     OneHotPreprocessor,
     PositionalFingerprintPreprocessor,
     ProtectedFingerprintPreprocessor,
+    ProtectedWholePeptideFingerprintPreprocessor,
     SequencePreprocessor,
     WholePeptideFingerprintPreprocessor,
 )
@@ -54,9 +55,11 @@ PREPROCESSOR_REGISTRY = {
     "protected_fingerprint": ProtectedFingerprintPreprocessor,
     "positional_fingerprint": PositionalFingerprintPreprocessor,
     "whole_peptide_fingerprint": WholePeptideFingerprintPreprocessor,
+    "protected_whole_peptide_fingerprint": ProtectedWholePeptideFingerprintPreprocessor,
     "occurency": OccurencyVectorPreprocessor,
 }
 
+# Classification-only models
 MODEL_REGISTRY = {
     "rff": RandomForestClassifier,
     "xgb": XGBClassifier,
@@ -67,10 +70,14 @@ MODEL_REGISTRY = {
     "weasel": WEASEL,
 }
 
+# Regression models — keyed separately so --model can select them under --task regression
 REGRESSION_MODEL_REGISTRY = {
     "rff": RandomForestRegressor,
     "xgb": XGBRegressor,
 }
+
+# Union of keys exposed to --model CLI option
+_ALL_MODEL_KEYS = sorted(set(list(MODEL_REGISTRY) + list(REGRESSION_MODEL_REGISTRY)))
 
 
 def load_data(
@@ -115,11 +122,10 @@ def train(dataset_dict: Dict[str, pd.DataFrame], model: str) -> Tuple[Any, Any, 
             np.stack(test_set["input"].to_list())
         )[:, 1]
 
-    ground_truth = list()
-    predictions = list()
+    ground_truth = []
+    predictions = []
     for serial in test_set["serial"].unique():
         subset = test_set[test_set["serial"] == serial]
-
         ground_truth.append(np.any(subset["aggregation"]))
         predictions.append(np.any(subset["prediction"]))
 
@@ -142,8 +148,8 @@ def train_regression(
 
     if model not in REGRESSION_MODEL_REGISTRY:
         raise ValueError(
-            f"Model {model} is not available for regression. "
-            f"Use one of: {list(REGRESSION_MODEL_REGISTRY)}."
+            f"Model '{model}' is not available for regression. "
+            f"Available: {list(REGRESSION_MODEL_REGISTRY)}."
         )
 
     regressor = REGRESSION_MODEL_REGISTRY[model]()
@@ -163,7 +169,7 @@ def train_regression(
 
 
 def add_prediction_frame(
-    prediction_frames: list[pd.DataFrame],
+    prediction_frames: list,
     test_predictions: pd.DataFrame,
     split: int,
 ) -> None:
@@ -173,7 +179,7 @@ def add_prediction_frame(
 
 
 def save_predictions(
-    prediction_frames: list[pd.DataFrame],
+    prediction_frames: list,
     output_path: Path,
     target_column: str,
 ) -> None:
@@ -182,7 +188,7 @@ def save_predictions(
 
     all_predictions = pd.concat(prediction_frames)
     prediction_columns = [
-        column for column in [
+        col for col in [
             "split",
             "serial",
             "peptide",
@@ -191,7 +197,7 @@ def save_predictions(
             "prediction",
             "prediction_probability",
         ]
-        if column in all_predictions.columns
+        if col in all_predictions.columns
     ]
     all_predictions[prediction_columns].to_csv(
         output_path / "step_predictions.csv",
@@ -204,16 +210,19 @@ def save_predictions(
 @click.option("--output_path", type=Path, required=True)
 @click.option("--loader", type=click.Choice(list(LOADER_REGISTRY.keys())))
 @click.option("--preprocessor", type=click.Choice(list(PREPROCESSOR_REGISTRY.keys())))
-@click.option("--model", type=click.Choice(list(MODEL_REGISTRY.keys())))
+@click.option("--model", type=click.Choice(_ALL_MODEL_KEYS))
 @click.option("--task", type=click.Choice(["classification", "regression"]), default="classification")
-@click.option("--target_column", type=str, default="first_diff_clean")
+@click.option("--target_column", type=str, default="first_diff_clean",
+              help="Regression target column (default: first_diff_clean).")
 @click.option("--seed", type=int, default=3245)
-@click.option("--n_repeats", type=int, default=0)
+@click.option("--n_repeats", type=int, default=0,
+              help="Number of repeats for whole_set_shuffled loader.")
 @click.option("--wof_start", type=int, required=False)
 @click.option("--wof_end", type=int, required=False)
 @click.option("--wof_drop", type=bool, required=False)
 @click.option("--occurency_vector_normalise", type=bool, required=False)
-@click.option("--save_step_predictions", is_flag=True)
+@click.option("--save_step_predictions", is_flag=True,
+              help="Save per-step predictions to step_predictions.csv in output_path.")
 def main(
     data_path: Path,
     output_path: Path,
@@ -231,11 +240,26 @@ def main(
     save_step_predictions: bool,
 ) -> None:
 
-    seed_everything(seed)
+    # ── Early validation ────────────────────────────────────────────────────
+    if task == "regression" and model not in REGRESSION_MODEL_REGISTRY:
+        raise click.UsageError(
+            f"Model '{model}' is not supported for regression. "
+            f"Available regression models: {list(REGRESSION_MODEL_REGISTRY)}."
+        )
 
-    f1, accuracy = list(), list()
-    mse, pearson = list(), list()
-    prediction_frames: list[pd.DataFrame] = list()
+    if model in ["hc2", "timeforest", "weasel"] and (
+        loader != "whole_set" or preprocessor != "sequence"
+    ):
+        raise click.UsageError(
+            f"Model '{model}' requires loader='whole_set' and preprocessor='sequence'."
+        )
+
+    seed_everything(seed)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    f1, accuracy = [], []
+    mse, pearson = [], []
+    prediction_frames: list = []
 
     if loader == "whole_set_shuffled":
         for i in tqdm.tqdm(range(n_repeats)):
@@ -253,37 +277,24 @@ def main(
             )
 
             if task == "regression":
-                mse_result, pearson_result, test_predictions = train_regression(
-                    dataset_dict,
-                    model,
-                    target_column,
-                )
-                mse.append(mse_result)
-                pearson.append(pearson_result)
+                if target_column not in dataset_dict["train"].columns:
+                    raise ValueError(
+                        f"Target column '{target_column}' not in dataset. "
+                        "Check that --loader produces it (e.g. whole_set with first_diff_clean)."
+                    )
+                mse_i, pearson_i, test_predictions = train_regression(dataset_dict, model, target_column)
+                mse.append(mse_i)
+                pearson.append(pearson_i)
             else:
-                f1_result, accuracy_results, test_predictions = train(dataset_dict, model)
-                f1.append(f1_result)
-                accuracy.append(accuracy_results)
+                f1_i, acc_i, test_predictions = train(dataset_dict, model)
+                f1.append(f1_i)
+                accuracy.append(acc_i)
 
             add_prediction_frame(prediction_frames, test_predictions, i)
 
     else:
         for cv_split in range(5):
-            logger.info(f"Running Split {cv_split}/5")
-
-            if task == "regression" and model not in REGRESSION_MODEL_REGISTRY:
-                raise ValueError(
-                    f"Model {model} is not available for regression. "
-                    f"Use one of: {list(REGRESSION_MODEL_REGISTRY)}."
-                )
-
-            if model in ["hc2", "timeforest", "weasel"] and (
-                loader != "whole_set" or preprocessor != "sequence"
-            ):
-                raise ValueError(
-                    f"Incompatible loader {loader} or preprocessor {preprocessor} "
-                    f"for model {model}."
-                )
+            logger.info(f"Running Split {cv_split + 1}/5")
 
             dataset_dict = load_data(
                 data_path,
@@ -299,26 +310,24 @@ def main(
             )
 
             if task == "regression":
-                if target_column not in dataset_dict["train"]:
+                if target_column not in dataset_dict["train"].columns:
                     raise ValueError(
-                        f"Target column {target_column!r} is not present in the loaded dataset."
+                        f"Target column '{target_column}' not in dataset. "
+                        "Check that --loader produces it (e.g. whole_set with first_diff_clean)."
                     )
-                mse_result, pearson_result, test_predictions = train_regression(
-                    dataset_dict,
-                    model,
-                    target_column,
-                )
+                mse_i, pearson_i, test_predictions = train_regression(dataset_dict, model, target_column)
                 logger.info(
-                    f"Finished Running Split {cv_split}/5 "
-                    f"MSE: {mse_result:.3f} Pearson: {pearson_result:.3f}"
+                    f"Split {cv_split + 1}/5 — MSE: {mse_i:.4f}  Pearson: {pearson_i:.4f}"
                 )
-                mse.append(mse_result)
-                pearson.append(pearson_result)
+                mse.append(mse_i)
+                pearson.append(pearson_i)
             else:
-                f1_result, accuracy_results, test_predictions = train(dataset_dict, model)
-                logger.info(f"Finished Running Split {cv_split}/5 F1: {f1_result:.3f}")
-                f1.append(f1_result)
-                accuracy.append(accuracy_results)
+                f1_i, acc_i, test_predictions = train(dataset_dict, model)
+                logger.info(
+                    f"Split {cv_split + 1}/5 — F1: {f1_i:.4f}  Accuracy: {acc_i:.4f}"
+                )
+                f1.append(f1_i)
+                accuracy.append(acc_i)
 
             add_prediction_frame(prediction_frames, test_predictions, cv_split)
 
@@ -327,33 +336,51 @@ def main(
 
     with (output_path / "results.json").open("w") as results_file:
         if task == "regression":
-            logger.info(f"MSE: {np.mean(mse):.3f}+-{np.std(mse):.3f}")
-            logger.info(f"Pearson: {np.nanmean(pearson):.3f}+-{np.nanstd(pearson):.3f}")
+            logger.info(
+                f"Final — MSE: {np.mean(mse):.4f}±{np.std(mse):.4f}  "
+                f"Pearson: {np.nanmean(pearson):.4f}±{np.nanstd(pearson):.4f}"
+            )
             json.dump(
                 {
+                    "task": "regression",
+                    "model": model,
+                    "preprocessor": preprocessor,
+                    "target_column": target_column,
                     "mse": {
-                        "mean": np.mean(mse).astype(float),
-                        "std": np.std(mse).astype(float),
+                        "mean": float(np.mean(mse)),
+                        "std": float(np.std(mse)),
                     },
                     "pearson": {
-                        "mean": np.nanmean(pearson).astype(float),
-                        "std": np.nanstd(pearson).astype(float),
+                        "mean": float(np.nanmean(pearson)),
+                        "std": float(np.nanstd(pearson)),
                     },
                     "raw_mse": list(mse),
-                    "raw_pearson": list(pearson),
+                    "raw_pearson": [p if not np.isnan(p) else None for p in pearson],
                 },
                 results_file,
+                indent=2,
             )
         else:
-            logger.info(f"Accuracy: {np.mean(accuracy):.3f}+-{np.std(accuracy):.3f}")
+            logger.info(
+                f"Final — Accuracy: {np.mean(accuracy):.4f}±{np.std(accuracy):.4f}  "
+                f"F1: {np.mean(f1):.4f}±{np.std(f1):.4f}"
+            )
             json.dump(
                 {
+                    "task": "classification",
+                    "model": model,
+                    "preprocessor": preprocessor,
                     "f1": {
-                        "mean": np.mean(f1).astype(float),
-                        "std": np.std(f1).astype(float),
+                        "mean": float(np.mean(f1)),
+                        "std": float(np.std(f1)),
+                    },
+                    "accuracy": {
+                        "mean": float(np.mean(accuracy)),
+                        "std": float(np.std(accuracy)),
                     },
                     "raw_f1": list(f1),
                     "raw_acc": list(accuracy),
                 },
                 results_file,
+                indent=2,
             )
