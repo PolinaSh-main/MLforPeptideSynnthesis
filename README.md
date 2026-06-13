@@ -9,11 +9,11 @@ This repo contains code accompanying the publication [Amino Acid Composition dri
 
 ## Installation
 
-The project was developed and tested on Python 3.10 and utilises poetry as package manager. To install the package run the commands provided below. The installation is expected to take less than five minutes.  
+The project was developed and tested on Python 3.10 and uses [uv](https://docs.astral.sh/uv/) as package manager (uv is fully pip-compatible, so a plain `pip install -e .` also works). To install the package run the commands provided below. The installation is expected to take less than five minutes.
 
 ```console
-pip install poetry
-poetry install
+uv venv
+uv pip install -e .
 ```
 
 ## Preprocessing data
@@ -21,7 +21,7 @@ poetry install
 To create the dataset used to train models, use the following script:
 
 ```console
-poetry run create_combined_data \
+uv run create_combined_data \
     --dataset <Path to UZH dataset> src/ai4agg/resources/dataset_configs/uzh.json \
     --dataset <Path to MIT dataset> src/ai4agg/resources/dataset_configs/mit.json \
     --save_path data/combined_data.csv
@@ -77,7 +77,7 @@ By default, syntheses are truncated to the first `--max_length` (default 20) ami
 2. Run:
 
    ```console
-   poetry run create_combined_data \
+   uv run create_combined_data \
        --dataset path/to/new_data.csv src/ai4agg/resources/dataset_configs/new_lab.json \
        --save_path data/combined_data.csv
    ```
@@ -92,20 +92,20 @@ unknown, `create_combined_data` will fail with a clear error message naming the 
 The following script allows training of classical machine learning models on the peptide aggregation data. This includes models ranging from a Random Forest to time series classification models:
 
 ```console
-poetry run train_sklearn_model 
+uv run train_sklearn_model 
     --data_path: Path to UZH/MIT combined dataset
     --output_path: Path where the result of the training are going to be saved
     --loader: Data loader to represent the data. Choose from: [reaction_set (stepwise representation), whole_set (whole peptide) and whole_set_shuffled]
-    --preprocessor: Preprocessor for the data. Choose from: [sequence, one_hot, fingerprint, protected_fingerprint, positional_fingerprint, whole_peptide_fingerprint, protected_whole_peptide_fingerprint, occurency, hydrophobicity, protected_fp_hydrophob]
+    --preprocessor: Preprocessor for the data. Choose from: [sequence, one_hot, fingerprint, protected_fingerprint, positional_fingerprint, whole_peptide_fingerprint, protected_whole_peptide_fingerprint, occurency, hydrophobicity, protected_fp_hydrophob, all_synthesis_hydrophob]
     --model: Model to train. Choose from: [rff (Random Forest), xgb (XGBoost), knn (K-Nearest Neighbour), gaussian (Gaussian Processes), hc2 (Hive Cote 2), timeforest (Time series forest), weasel (WEASEL)]
     --pg_scheme: Name of the protecting-group scheme (key in src/ai4agg/resources/pg_scheme.json),
-                 used by the 'hydrophobicity' and 'protected_fp_hydrophob' preprocessors. Default: default_uzh_mit
+                 used by the 'hydrophobicity', 'protected_fp_hydrophob' and 'all_synthesis_hydrophob' preprocessors. Default: default_uzh_mit
 ```
 
 As an example run the following. The folder `results/xgb` needs to exist:
 
 ```console
-poetry run train_sklearn_model --data_path data/combined_data.csv --output_path results/xgb  --loader whole_set --preprocessor occurency --model xgb
+uv run train_sklearn_model --data_path data/combined_data.csv --output_path results/xgb  --loader whole_set --preprocessor occurency --model xgb
 ```
 
 The script takes around a minute to run and the expected accuracy of the model is `0.596±0.019`.
@@ -115,7 +115,7 @@ The script takes around a minute to run and the expected accuracy of the model i
 To train HuggingFace models on the aggregation data use the following script. A GPU is recommended to train the models but at the expense of time the models can also be run locally:
 
 ```console
-poetry run train_hf_model 
+uv run train_hf_model 
     --data_path: Path to UZH/MIT combined dataset
     --output_path: Path where the result of the training are going to be saved
     --model: Model to train e.g. facebook/esm2_t33_650M_UR50D. We evaluated ESM 2.0 and BERT.
@@ -138,13 +138,54 @@ bash scripts/run_wof_sklearn.sh <Path to Experiment Folder>
 To explain the predictions of the models we use Shap values. To reproduce our results use the following scripts: 
 
 ```console
-poetry run explain_model --data_path data/combined_data.csv --output_path <Path where results should be stored>
+uv run explain_model --data_path data/combined_data.csv --output_path <Path where results should be stored>
 ```
 
 `explain_model` also accepts `--preprocessor` (same choices as `train_sklearn_model`) and
 `--pg_scheme`. With `--preprocessor hydrophobicity` or `protected_fp_hydrophob`, the SHAP
 ranking CSV uses readable names like `pos0_logP`, `pos1_logP`, ... so you can directly compare
 which positions/features drive the model versus the `occurency` baseline.
+
+## Running a full experiment grid
+
+`run_experiment_grid` sweeps every combination of data loader, preprocessor and model,
+collects all `results.json` files into one comparison CSV, and runs SHAP analysis for the
+best model of each preprocessor. This is the easiest way to compare all the feature-
+engineering options added above (including `all_synthesis_hydrophob`, the preprocessor that
+combines every per-residue synthesis-machine readout — `coupling_agent`, `coupling_strokes`,
+`deprotection_strokes`, `flow_rate`, `machine`, `temp_coupling`, `temp_reactor_1`,
+`first_area`/`height`/`width`, `prev_area`/`height`/`width`/`diff` — with `hydrophobicity`).
+
+```console
+uv run run_experiment_grid --data_path data/combined_data.csv --output_path results/experiment_grid
+```
+
+By default this runs:
+
+- **Loaders**: `whole_set`, `reaction_set`, `whole_set_shuffled`
+- **Preprocessors**: every entry in `train_sklearn_model`'s `--preprocessor` choices
+  (`sequence`, `one_hot`, `fingerprint`, `protected_fingerprint`, `positional_fingerprint`,
+  `whole_peptide_fingerprint`, `protected_whole_peptide_fingerprint`, `occurency`,
+  `hydrophobicity`, `protected_fp_hydrophob`, `all_synthesis_hydrophob`)
+- **Models**: `rff`, `xgb`, `knn` (fast classifiers — `gaussian`, `hc2`, `timeforest`,
+  `weasel` are excluded as they're slow over the full grid and/or restricted to
+  `--loader whole_set --preprocessor sequence`)
+- **PG schemes**: `default_uzh_mit`
+
+Each combination's `results.json` is written to
+`results/experiment_grid/train/<loader>__<preprocessor>__<model>__<pg_scheme>/`, and a single
+summary is written to `results/experiment_grid/experiment_results.csv` with columns
+`loader, preprocessor, model, pg_scheme, task, accuracy_mean, accuracy_std, f1_mean, f1_std, status`
+— open this in a spreadsheet to compare all options at a glance.
+
+For each `(preprocessor, pg_scheme)` pair, the grid picks whichever of `rff`/`xgb` scored
+highest accuracy and runs `explain_model` on it, saving the SHAP plot and ranking CSV under
+`results/experiment_grid/shap/<preprocessor>__<pg_scheme>__<model>/`.
+
+Use `--loaders`, `--preprocessors`, `--models`, `--pg_schemes` (each repeatable) to restrict
+the grid, `--skip_existing` to resume a partially-completed run, and `--shap_n_repeats` /
+`--shuffled_n_repeats` to control the number of repeats for SHAP analysis and the
+`whole_set_shuffled` loader respectively.
 
 ## Feature engineering: adding a new feature
 
@@ -224,8 +265,8 @@ PREPROCESSOR_REGISTRY = {
 Then run, e.g.:
 
 ```console
-poetry run train_sklearn_model --preprocessor protected_fp_hydrophob_myfeature --model xgb ...
-poetry run explain_model --preprocessor protected_fp_hydrophob_myfeature --model xgb ...
+uv run train_sklearn_model --preprocessor protected_fp_hydrophob_myfeature --model xgb ...
+uv run explain_model --preprocessor protected_fp_hydrophob_myfeature --model xgb ...
 ```
 
 The SHAP ranking will automatically include your feature's names from `feature_names()`.
@@ -235,6 +276,19 @@ The SHAP ranking will automatically include your feature's names from `feature_n
 - `ProtectedFingerprintFeature` — per-residue Morgan fingerprint of the protected (Fmoc-AA(PG)-OH) amino acid.
 - `HydrophobicityFeature` — per-residue PG-corrected Consensus logP (`pos{i}_logP`). Falls back to the
   table-wide mean if a given (AA, PG) combination isn't in `hydrophobicity_clean.csv`.
-- `CouplingAgentFeature` — one-hot encoding of the `coupling_agent` metadata column (NaN if absent).
+- `CouplingAgentFeature` / `MachineFeature` — one-hot encoding of the `coupling_agent` /
+  `machine` metadata columns (`CategoricalMetadataFeature` subclasses; all-zero if the
+  column is absent or NaN for a row).
+- `TempCouplingFeature` — scalar `temp_coupling` value, falling back to the dataset-wide
+  mean if missing (`NumericMetadataFeature` subclass).
+- `CouplingStrokesFeature`, `DeprotectionStrokesFeature`, `FlowRateFeature`,
+  `TempReactorFeature`, `FirstAreaFeature`, `FirstHeightFeature`, `FirstWidthFeature`,
+  `PrevAreaFeature`, `PrevHeightFeature`, `PrevWidthFeature`, `PrevDiffFeature` — per-residue
+  synthesis-machine readouts (`pos{i}_<name>`, `SynthesisStepFeature` subclasses), only
+  populated for datasets that record them (currently MIT); fall back to the dataset-wide
+  mean (real positions) or 0.0 (padding).
 - `PositionalWeightFeature` — wraps another feature and multiplies each residue's block by a
   position-from-C-terminus weight, e.g. `PositionalWeightFeature(max_sequence_len, wrapped_feature=HydrophobicityFeature)`.
+- `all_synthesis_hydrophob` (in `PREPROCESSOR_REGISTRY`) combines all of the above metadata
+  features with `HydrophobicityFeature` — the full "all UZH/MIT synthesis features +
+  hydrophobicity" preprocessor used by `run_experiment_grid`.

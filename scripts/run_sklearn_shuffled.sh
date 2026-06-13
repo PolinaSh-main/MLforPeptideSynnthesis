@@ -8,7 +8,7 @@ for loader in whole_set_shuffled; do
             mkdir -p ${top_folder}/${loader}/${preprocessor}/${model}
             echo ${loader}/${preprocessor}/${model}
 
-            poetry run train_sklearn_model \
+            uv run train_sklearn_model \
                 --data_path data/combined_data.csv\
                 --output_path ${top_folder}/${loader}/${preprocessor}/${model} \
                 --loader ${loader} \

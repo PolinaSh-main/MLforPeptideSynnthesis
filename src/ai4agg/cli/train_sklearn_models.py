@@ -36,7 +36,43 @@ from ..utils.preprocessors import (
     SequencePreprocessor,
     WholePeptideFingerprintPreprocessor,
 )
-from ..features import ProtectedFingerprintFeature, HydrophobicityFeature
+from ..features import (
+    ProtectedFingerprintFeature,
+    HydrophobicityFeature,
+    CouplingAgentFeature,
+    MachineFeature,
+    TempCouplingFeature,
+    CouplingStrokesFeature,
+    DeprotectionStrokesFeature,
+    FlowRateFeature,
+    TempReactorFeature,
+    FirstAreaFeature,
+    FirstHeightFeature,
+    FirstWidthFeature,
+    PrevAreaFeature,
+    PrevHeightFeature,
+    PrevWidthFeature,
+    PrevDiffFeature,
+)
+
+# All synthesis-metadata features (UZH+MIT columns) plus per-residue hydrophobicity.
+ALL_SYNTHESIS_FEATURES = [
+    CouplingAgentFeature,
+    MachineFeature,
+    TempCouplingFeature,
+    CouplingStrokesFeature,
+    DeprotectionStrokesFeature,
+    FlowRateFeature,
+    TempReactorFeature,
+    FirstAreaFeature,
+    FirstHeightFeature,
+    FirstWidthFeature,
+    PrevAreaFeature,
+    PrevHeightFeature,
+    PrevWidthFeature,
+    PrevDiffFeature,
+    HydrophobicityFeature,
+]
 from ..utils.utils import seed_everything, split_peptide_set
 from ..utils.data_logger import log_dataframe
 from functools import partial
@@ -66,6 +102,7 @@ PREPROCESSOR_REGISTRY = {
     # New features can be combined here without touching any other code —
     # see src/ai4agg/features/README.md
     "protected_fp_hydrophob": partial(CompositePreprocessor, [ProtectedFingerprintFeature, HydrophobicityFeature]),
+    "all_synthesis_hydrophob": partial(CompositePreprocessor, ALL_SYNTHESIS_FEATURES),
 }
 
 # Classification-only models

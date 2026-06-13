@@ -8,7 +8,7 @@ for loader in reaction_set whole_set; do
             mkdir -p ${top_folder}/${loader}/${preprocessor}/${model}
             echo ${loader}/${preprocessor}/${model}
 
-            poetry run train_sklearn_model \
+            uv run train_sklearn_model \
                 --data_path data/combined_data.csv\
                 --output_path ${top_folder}/${loader}/${preprocessor}/${model} \
                 --loader ${loader} \
@@ -23,7 +23,7 @@ for model in hc2 timeforest weasel; do
     mkdir -p ${top_folder}/whole_set/sequence/${model}
     echo whole_set/sequence/${model}
 
-    poetry run train_sklearn_model \
+    uv run train_sklearn_model \
         --data_path data/combined_data.csv\
         --output_path ${top_folder}/whole_set/sequence/${model} \
         --loader whole_set \

@@ -7,7 +7,19 @@
     "pre_chain": "pre-chain",
     "first_diff": "first_diff",
     "coupling_agent": "coupling_agent",
-    "temp_coupling": "temp_coupling"
+    "temp_coupling": "temp_coupling",
+    "machine": "machine",
+    "coupling_strokes": "coupling_strokes",
+    "deprotection_strokes": "deprotection_strokes",
+    "flow_rate": "flow_rate",
+    "temp_reactor_1": "temp_reactor_1",
+    "first_area": "first_area",
+    "first_height": "first_height",
+    "first_width": "first_width",
+    "prev_area": "prev_area",
+    "prev_height": "prev_height",
+    "prev_width": "prev_width",
+    "prev_diff": "prev_diff"
   },
   "constants": {
     "solvent": "DMF",

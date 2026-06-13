@@ -11,7 +11,7 @@ for preprocessor in sequence one_hot fingerprint; do
                     mkdir -p ${top_folder}/${preprocessor}/${model}/drop_${wof_drop}/start_${wof_start}/end_${wof_end}
                     echo ${top_folder}/${preprocessor}/${model}/drop_${wof_drop}/start_${wof_start}/end_${wof_end}
 
-                    poetry run train_sklearn_model \
+                    uv run train_sklearn_model \
                         --data_path data/combined_data.csv\
                         --output_path ${top_folder}/${preprocessor}/${model}/drop_${wof_drop}/start_${wof_start}/end_${wof_end} \
                         --loader wof_set \

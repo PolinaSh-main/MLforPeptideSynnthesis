@@ -41,6 +41,7 @@ train_hf_model = "ai4agg.cli.train_hf_models:main"
 train_sklearn_model = "ai4agg.cli.train_sklearn_models:main"
 explain_model = "ai4agg.cli.explainability:main"
 analyse_peptide = "ai4agg.cli.analyse_peptide:main"
+run_experiment_grid = "ai4agg.cli.run_experiment_grid:main"
 
 [build-system]
 requires = ["hatchling"]

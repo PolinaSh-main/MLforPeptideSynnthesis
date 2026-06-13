@@ -9,7 +9,13 @@ from ..utils.data_logger import log_step, log_dataframe
 
 logger = logging.getLogger(__name__)
 
-METADATA_COLUMNS = ["coupling_agent", "solvent", "resin", "temp_coupling", "pg_scheme"]
+METADATA_COLUMNS = ["coupling_agent", "solvent", "resin", "temp_coupling", "pg_scheme", "machine"]
+# Per-residue synthesis-machine readouts, only available for some datasets (e.g. MIT).
+SYNTH_STEP_COLUMNS = [
+    "coupling_strokes", "deprotection_strokes", "flow_rate", "temp_reactor_1",
+    "first_area", "first_height", "first_width",
+    "prev_area", "prev_height", "prev_width", "prev_diff",
+]
 
 
 # Reaction set: Data as is, one amino acid addition at a time
@@ -29,22 +35,31 @@ def make_whole_peptide_set(data_path: Path, **kwargs) -> pd.DataFrame: # noqa
     whole_peptide_indices = list()
     aggregation = list()
     first_diff_clean = list()
+    step_columns = [col for col in SYNTH_STEP_COLUMNS if col in data.columns]
+    step_arrays: dict = {col: [] for col in step_columns}
     for serial in data["serial"].unique():
         subset = data[data["serial"] == serial]
         whole_peptide_indices.append(subset.iloc[-1].name)
         aggregation.append(subset['aggregation'].sum() >= 1)
         if "first_diff_clean" in subset:
             first_diff_clean.append(subset["first_diff_clean"].min())
+        # pos0 is the seed residue of "pre-chain" and has no recorded synthesis
+        # step; positions 1.. correspond to the amino acids added in `subset`.
+        for col in step_columns:
+            step_arrays[col].append([np.nan] + subset[col].tolist())
 
     whole_peptide_set = data.loc[whole_peptide_indices]
     logger.info(f"[make_whole_peptide_set] Extracted {len(whole_peptide_set)} whole peptide indices")
-    
+
     whole_peptide_set['aggregation'] = aggregation
     columns = ["peptide", "serial", "aggregation"]
     if first_diff_clean:
         whole_peptide_set["first_diff_clean"] = first_diff_clean
         columns.append("first_diff_clean")
     columns += [col for col in METADATA_COLUMNS if col in whole_peptide_set.columns]
+    for col in step_columns:
+        whole_peptide_set[col] = step_arrays[col]
+    columns += step_columns
     whole_peptide_set = whole_peptide_set[columns]
     
     logger.info(f"[make_whole_peptide_set] Before dedup: {len(whole_peptide_set)} rows")
@@ -93,7 +108,7 @@ def get_aggregation_label_wof(
     columns = ["peptide", "serial", "aggregation"]
     if "first_diff_clean" in subset:
         columns.append("first_diff_clean")
-    columns += [col for col in METADATA_COLUMNS if col in subset.columns]
+    columns += [col for col in METADATA_COLUMNS + SYNTH_STEP_COLUMNS if col in subset.columns]
     return subset[columns]
 
 def make_wof_peptide_set(

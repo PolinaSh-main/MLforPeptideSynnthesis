@@ -30,6 +30,7 @@ from ..utils.preprocessors import (
     WholePeptideFingerprintPreprocessor,
 )
 from ..features import ProtectedFingerprintFeature, HydrophobicityFeature
+from ..cli.train_sklearn_models import ALL_SYNTHESIS_FEATURES
 from ..utils.utils import seed_everything
 
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +47,7 @@ PREPROCESSOR_REGISTRY = {
     "protected_whole_peptide_fingerprint": ProtectedWholePeptideFingerprintPreprocessor,
     "hydrophobicity": HydrophobicityPreprocessor,
     "protected_fp_hydrophob": partial(CompositePreprocessor, [ProtectedFingerprintFeature, HydrophobicityFeature]),
+    "all_synthesis_hydrophob": partial(CompositePreprocessor, ALL_SYNTHESIS_FEATURES),
 }
 
 # ── Model registry (tree models → TreeExplainer; others → KernelExplainer) ──
@@ -470,6 +472,7 @@ def main(
         "protected_whole_peptide_fingerprint": "Protected Whole-peptide Fingerprint Bit Value",
         "hydrophobicity": "Residue logP (PG-corrected)",
         "protected_fp_hydrophob": "Feature Value",
+        "all_synthesis_hydrophob": "Feature Value",
     }
     cbar_label = color_bar_label or _cbar_defaults.get(preprocessor, "Feature Value")
 

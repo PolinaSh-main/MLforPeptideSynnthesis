@@ -7,7 +7,7 @@ import click
 import pandas as pd
 
 from ..utils.data_logger import log_dataframe
-from ..utils.dataset_loader import load_dataset
+from ..utils.dataset_loader import load_dataset, METADATA_COLUMNS, SYNTH_STEP_COLUMNS
 
 logger = logging.getLogger(__name__)
 
@@ -154,10 +154,11 @@ def main(
 
     # Save
     logger.info("\n[STEP 6] Saving to CSV")
-    output_columns = [
-        'serial', 'peptide', 'first_diff_clean', 'aggregation',
-        'coupling_agent', 'solvent', 'resin', 'temp_coupling', 'pg_scheme',
-    ]
+    output_columns = (
+        ['serial', 'peptide', 'first_diff_clean', 'aggregation']
+        + METADATA_COLUMNS
+        + SYNTH_STEP_COLUMNS
+    )
     combined_dataset = combined_dataset[output_columns]
     combined_dataset.to_csv(save_path)
     logger.info(f"[STEP 6] Saved {len(combined_dataset)} rows to {save_path}")

@@ -12,15 +12,21 @@ from .data_logger import log_dataframe
 logger = logging.getLogger(__name__)
 
 REQUIRED_COLUMN_MAP_KEYS = ["serial", "amino_acid", "pre_chain", "first_diff"]
-METADATA_COLUMNS = ["coupling_agent", "solvent", "resin", "temp_coupling", "pg_scheme"]
-STANDARD_COLUMNS = ["serial", "peptide", "amino_acid", "first_diff"] + METADATA_COLUMNS
+METADATA_COLUMNS = ["coupling_agent", "solvent", "resin", "temp_coupling", "pg_scheme", "machine"]
+# Per-residue synthesis-machine readouts, only available for some datasets (e.g. MIT).
+SYNTH_STEP_COLUMNS = [
+    "coupling_strokes", "deprotection_strokes", "flow_rate", "temp_reactor_1",
+    "first_area", "first_height", "first_width",
+    "prev_area", "prev_height", "prev_width", "prev_diff",
+]
+STANDARD_COLUMNS = ["serial", "peptide", "amino_acid", "first_diff"] + METADATA_COLUMNS + SYNTH_STEP_COLUMNS
 
 
 def filter_synthesis(synthesis_data: pd.DataFrame, max_length: int = 20, truncate: bool = True) -> pd.DataFrame:
     logger.info(f"[filter_synthesis] Input: {len(synthesis_data)} rows, {synthesis_data['serial'].nunique()} serials")
     logger.info(f"[filter_synthesis] Max peptide length: {max_length}, truncate: {truncate}")
 
-    metadata_cols = [c for c in METADATA_COLUMNS if c in synthesis_data.columns]
+    metadata_cols = [c for c in METADATA_COLUMNS + SYNTH_STEP_COLUMNS if c in synthesis_data.columns]
     keep_cols = ['serial', 'peptide', 'amino_acid', 'first_diff'] + metadata_cols
 
     subsets = list()

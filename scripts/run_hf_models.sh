@@ -6,7 +6,7 @@ for model in facebook/esm2_t6_8M_UR50D facebook/esm2_t12_35M_UR50D facebook/esm2
     mkdir -p ${top_folder}/${model}_pretrained
     echo ${top_folder}/${model}_pretrained
 
-    poetry run train_hf_model \
+    uv run train_hf_model \
             --data_path data/combined_data.csv\
             --output_path ${top_folder}/${model}_pretrained \
             --model ${model} \
@@ -18,7 +18,7 @@ for model in facebook/esm2_t6_8M_UR50D facebook/esm2_t12_35M_UR50D facebook/esm2
     mkdir -p ${top_folder}/${model}
     echo ${top_folder}/${model}
 
-    poetry run train_hf_model \
+    uv run train_hf_model \
             --data_path data/combined_data.csv\
             --output_path ${top_folder}/${model} \
             --model ${model} \
